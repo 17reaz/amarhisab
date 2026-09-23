@@ -1,6 +1,25 @@
+import { Navigate } from "react-router-dom"
+
 import { LoginForm } from "../components/login-form"
+import { useAuth } from "../hooks/use-auth"
 
 export function LoginPage() {
+  const { loading, isAuthenticated } = useAuth()
+
+  if (loading) {
+    return (
+      <main className="flex min-h-svh items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">
+          Loading...
+        </div>
+      </main>
+    )
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/app" replace />
+  }
+
   return (
     <main className="min-h-svh bg-background">
       <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-5 py-8 sm:px-6">
