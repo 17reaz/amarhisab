@@ -11,47 +11,47 @@ export default defineConfig({
     tailwindcss(),
 
     VitePWA({
-      registerType: "autoUpdate",
+  registerType: "autoUpdate",
 
-      manifest: {
-        name: "TripLedger",
-        short_name: "TripLedger",
-        description: "Travel agency finance management",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
-          {
-            src: "/public/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/public/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/public/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-        ],
+  manifest: {
+    name: "AmarHisab",
+    short_name: "AmarHisab",
+    description: "Travel agency finance management",
+    theme_color: "#ffffff",
+    background_color: "#ffffff",
+    display: "standalone",
+    orientation: "portrait",
+    scope: "/",
+    start_url: "/",
+    icons: [
+      {
+        src: "/public/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
       },
+      {
+        src: "/public/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        src: "/public/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any maskable",
+      },
+    ],
+  },
 
-      workbox: {
-        cleanupOutdatedCaches: true,
-        navigateFallback: "/",
-      },
+  workbox: {
+    cleanupOutdatedCaches: true,
+    navigateFallback: "/",
+  },
 
-      devOptions: {
-        enabled: true,
-      },
-    }),
+  devOptions: {
+    enabled: true,
+  },
+})
   ],
 
   resolve: {
