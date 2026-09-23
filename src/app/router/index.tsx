@@ -41,17 +41,19 @@ function ProtectedRoutes() {
       />
 
       <Route
-        path="*"
-        element={<Navigate to="/app" replace />}
-      />
-      <Route
-        path="/app/agencies"
-        element={<AgenciesPage />}
-      />
-      <Route
-        path="/app/transactions"
-        element={<TransactionsPage />}
-      />
+  path="/app/agencies"
+  element={<AgenciesPage />}
+/>
+
+<Route
+  path="/app/transactions"
+  element={<TransactionsPage />}
+/>
+
+<Route
+  path="*"
+  element={<Navigate to="/app" replace />}
+/>
     </Routes>
   )
 }

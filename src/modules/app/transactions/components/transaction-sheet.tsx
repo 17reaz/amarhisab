@@ -362,7 +362,7 @@ export function TransactionSheet({
 
               <Select
                 value={agentId}
-                onValueChange={setAgentId}
+                onValueChange={(value) => setAgentId(value ?? "")}
                 disabled={loading}
               >
                 <SelectTrigger>
@@ -400,7 +400,7 @@ export function TransactionSheet({
 
               <Select
                 value={agencyId}
-                onValueChange={setAgencyId}
+                onValueChange={(value) => setAgencyId(value ?? "")}
                 disabled={loading}
               >
                 <SelectTrigger>
