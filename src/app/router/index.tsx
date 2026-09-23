@@ -6,9 +6,11 @@ import {
 } from "react-router-dom"
 
 import { DashboardPage } from "@/modules/app/pages/dashboard-page"
+import { AgentsPage } from "@/modules/app/agents/pages/agents-page"
+import { AgenciesPage } from "@/modules/app/agencies/pages/agencies-page"
+import { TransactionsPage } from "@/modules/app/transactions/pages/transactions-page"
 import { LoginPage } from "@/modules/auth/pages/login-page"
 import { useAuth } from "@/modules/auth/hooks/use-auth"
-
 function ProtectedRoutes() {
   const { loading, isAuthenticated } = useAuth()
 
@@ -28,11 +30,27 @@ function ProtectedRoutes() {
 
   return (
     <Routes>
-      <Route path="/app" element={<DashboardPage />} />
+      <Route
+        path="/app"
+        element={<DashboardPage />}
+      />
+
+      <Route
+        path="/app/agents"
+        element={<AgentsPage />}
+      />
 
       <Route
         path="*"
         element={<Navigate to="/app" replace />}
+      />
+      <Route
+        path="/app/agencies"
+        element={<AgenciesPage />}
+      />
+      <Route
+        path="/app/transactions"
+        element={<TransactionsPage />}
       />
     </Routes>
   )
@@ -42,7 +60,10 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
 
         <Route
           path="/*"
