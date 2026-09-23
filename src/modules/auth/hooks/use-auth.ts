@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { Session } from "@supabase/supabase-js"
+import type { Session, User } from "@supabase/supabase-js"
 
 import { supabase } from "@/lib/supabase"
 
@@ -20,8 +20,8 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session)
+      (_event, nextSession) => {
+        setSession(nextSession)
         setLoading(false)
       },
     )
@@ -34,7 +34,7 @@ export function useAuth() {
 
   return {
     session,
-    user: session?.user ?? null,
+    user: session?.user as User | null,
     loading,
     isAuthenticated: !!session,
   }
