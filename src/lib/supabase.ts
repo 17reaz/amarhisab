@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+const supabasePublishableKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error("Missing Supabase environment variables")
@@ -10,4 +11,19 @@ if (!supabaseUrl || !supabasePublishableKey) {
 export const supabase = createClient(
   supabaseUrl,
   supabasePublishableKey,
-) 
+  {
+    auth: {
+      // Keep the user logged in across page refreshes/browser restarts.
+      persistSession: true,
+
+      // Automatically refresh the access token.
+      autoRefreshToken: true,
+
+      // Needed for OAuth/password recovery URL flows.
+      detectSessionInUrl: true,
+
+      // Dedicated storage key for AmarHisab.
+      storageKey: "amarhisab-auth",
+    },
+  },
+)

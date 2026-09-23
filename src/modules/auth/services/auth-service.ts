@@ -11,7 +11,9 @@ export async function signIn(
 }
 
 export async function signOut() {
-  return supabase.auth.signOut()
+  return supabase.auth.signOut({
+    scope: "local",
+  })
 }
 
 export async function getSession() {

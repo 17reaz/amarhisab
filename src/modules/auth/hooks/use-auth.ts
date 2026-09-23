@@ -10,17 +10,29 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true
 
-    supabase.auth.getSession().then(({ data }) => {
+    const loadSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+
       if (!mounted) return
 
-      setSession(data.session)
+      if (error) {
+        console.error("Failed to load auth session:", error)
+        setSession(null)
+      } else {
+        setSession(data.session)
+      }
+
       setLoading(false)
-    })
+    }
+
+    loadSession()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
+        if (!mounted) return
+
         setSession(nextSession)
         setLoading(false)
       },
@@ -36,6 +48,6 @@ export function useAuth() {
     session,
     user: session?.user as User | null,
     loading,
-    isAuthenticated: !!session,
+    isAuthenticated: Boolean(session),
   }
 }
