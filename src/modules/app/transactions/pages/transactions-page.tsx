@@ -319,28 +319,35 @@ export function TransactionsPage() {
 
         {/* Summary */}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border bg-card p-4">
-            <p className="text-xs text-muted-foreground">
-              Income
-            </p>
+ <div className="grid grid-cols-2 gap-3">
+  <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+      <ArrowDownLeft className="size-5" />
+    </div>
 
-            <p className="mt-1 text-lg font-semibold">
-              ৳ {formatAmount(totalIncome)}
-            </p>
-          </div>
+    <div className="min-w-0 flex-1">
+      <p className="text-xs text-muted-foreground">Income</p>
 
-          <div className="rounded-xl border bg-card p-4">
-            <p className="text-xs text-muted-foreground">
-              Expense
-            </p>
+      <p className="truncate text-base font-semibold">
+        ৳ {formatAmount(totalIncome)}
+      </p>
+    </div>
+  </div>
 
-            <p className="mt-1 text-lg font-semibold">
-              ৳ {formatAmount(totalExpense)}
-            </p>
-          </div>
-        </div>
+  <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+      <ArrowUpRight className="size-5" />
+    </div>
 
+    <div className="min-w-0 flex-1">
+      <p className="text-xs text-muted-foreground">Expense</p>
+
+      <p className="truncate text-base font-semibold">
+        ৳ {formatAmount(totalExpense)}
+      </p>
+    </div>
+  </div>
+</div>
         {/* Search */}
 
         <div className="relative">
@@ -456,157 +463,91 @@ export function TransactionsPage() {
 
         {/* Transaction List */}
 
-        {!loading &&
-        filteredTransactions.length > 0 ? (
-          <div className="space-y-3">
-            {filteredTransactions.map(
-              (transaction) => {
-                const isIncome =
-                  transaction.type ===
-                  "income"
+        {!loading && filteredTransactions.length > 0 ? (
+  <Card className="overflow-hidden rounded-2xl border-0 shadow-sm ring-1 ring-border/60">
+    <CardContent className="divide-y p-0">
+      {filteredTransactions.map((transaction) => {
+        const isIncome = transaction.type === "income"
 
-                const partyName =
-                  getPartyName(transaction)
+        const partyName = getPartyName(transaction)
 
-                const partyLabel =
-                  transaction.party_type ===
-                  "agent"
-                    ? "Agent"
-                    : "Agency"
+        const partyLabel =
+          transaction.party_type === "agent" ? "Agent" : "Agency"
 
-                const party =
-                  transaction.party_type ===
-                  "agent"
-                    ? agents.find(
-                        (agent) =>
-                          agent.id ===
-                          transaction.agent_id,
-                      )
-                    : agencies.find(
-                        (agency) =>
-                          agency.id ===
-                          transaction.agency_id,
-                      )
+        const party =
+          transaction.party_type === "agent"
+            ? agents.find((agent) => agent.id === transaction.agent_id)
+            : agencies.find((agency) => agency.id === transaction.agency_id)
 
-                const partyDisplay =
-  party?.name ?? partyName
+        const partyDisplay = party?.name ?? partyName
 
-                return (
-                  <Card
-                    key={transaction.id}
-                    className="overflow-hidden transition-shadow hover:shadow-sm"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        {/* Type Icon */}
+        return (
+          <button
+            key={transaction.id}
+            type="button"
+            onClick={() => handleEdit(transaction)}
+            aria-label={`Edit ${
+              transaction.description || (isIncome ? "income" : "expense")
+            }`}
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
+          >
+            {/* Type Icon */}
+            <div
+              className={`flex size-11 shrink-0 items-center justify-center rounded-full ${
+                isIncome
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+              }`}
+            >
+              {isIncome ? (
+                <ArrowDownLeft className="size-5" />
+              ) : (
+                <ArrowUpRight className="size-5" />
+              )}
+            </div>
 
-                        <div
-                          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                            isIncome
-                              ? "bg-muted"
-                              : "bg-destructive/10"
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownLeft className="size-5" />
-                          ) : (
-                            <ArrowUpRight className="size-5 text-destructive" />
-                          )}
-                        </div>
+            {/* Description + Party */}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {transaction.description || (isIncome ? "Income" : "Expense")}
+              </p>
 
-                        {/* Main Content */}
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {partyDisplay ? `${partyDisplay} • ` : ""}
+                {partyLabel}
+              </p>
 
-                        <div className="min-w-0 flex-1">
-                          {/* Description + Amount */}
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {formatPaymentMethod(transaction.payment_method)}
+              </p>
+            </div>
 
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold">
-                                {transaction.description ||
-                                  (isIncome
-                                    ? "Income"
-                                    : "Expense")}
-                              </p>
+            {/* Amount + Date */}
+            <div className="shrink-0 text-right">
+              <p
+                className={`text-sm font-bold tabular-nums tracking-tight ${
+                  isIncome
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {isIncome ? "+" : "−"}৳
+                {Number(transaction.amount).toLocaleString("en-BD", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
 
-                              <p className="mt-1 truncate text-xs text-muted-foreground">
-                                {partyLabel}
-
-                                {partyDisplay
-                                  ? ` • ${partyDisplay}`
-                                  : ""}
-                              </p>
-                            </div>
-
-                            {/* Amount */}
-
-                            <p
-                              className={`shrink-0 text-base font-bold tracking-tight ${
-                                isIncome
-                                  ? "text-foreground"
-                                  : "text-destructive"
-                              }`}
-                            >
-                              {isIncome
-                                ? "+"
-                                : "−"}
-                              ৳
-                              {Number(
-                                transaction.amount,
-                              ).toLocaleString(
-                                "en-BD",
-                                {
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 2,
-                                },
-                              )}
-                            </p>
-                          </div>
-
-                          {/* Payment + Date + Edit */}
-
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                              <span className="shrink-0">
-                                {formatPaymentMethod(
-                                  transaction.payment_method,
-                                )}
-                              </span>
-
-                              <span>
-                                •
-                              </span>
-
-                              <span className="shrink-0">
-                                {formatDate(
-                                  transaction.transaction_date,
-                                )}
-                              </span>
-                            </div>
-
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
-                              onClick={() =>
-                                handleEdit(
-                                  transaction,
-                                )
-                              }
-                            >
-                              <Pencil className="size-3.5" />
-                              Edit
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              },
-            )}
-          </div>
-        ) : null}
+              <p className="mt-1 text-xs text-muted-foreground">
+                {formatDate(transaction.transaction_date)}
+              </p>
+            </div>
+          </button>
+        )
+      })}
+    </CardContent>
+  </Card>
+) : null}
       </div>
 
       {/* Transaction Sheet */}
