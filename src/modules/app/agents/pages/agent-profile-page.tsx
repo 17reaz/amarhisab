@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
-  ChevronDown,
   ChevronUp,
   FileText,
   Phone,
@@ -390,58 +389,55 @@ export function AgentProfilePage() {
 
               {/* Generate PDF */}
 
-              <PartyStatementDownload
-                partyType="agent"
-                party={{
-                  sl: agent.sl,
-                  name: agent.name,
-                  phone: agent.phone,
-                }}
-                transactions={filteredTransactions.map(
-                  (transaction) => ({
-                    id: transaction.id,
-                    transaction_date:
-                      transaction.transaction_date,
-                    type: transaction.type,
-                    amount: Number(
-                      transaction.amount,
-                    ),
-                    description:
-                      transaction.description,
-                    payment_method:
-                      transaction.payment_method,
-                    party_type: "agent",
-                    agent_id:
-                      transaction.agent_id,
-                    agency_id:
-                      transaction.agency_id,
-                  }),
-                )}
-                summary={{
-                  totalIncome:
-                    summary.income,
-                  totalExpense:
-                    summary.expense,
-                  netBalance:
-                    summary.net,
-                }}
-                dateFrom={
-                  dateFrom ||
-                  filteredTransactions.at(-1)
-                    ?.transaction_date ||
-                  new Date()
-                    .toISOString()
-                    .slice(0, 10)
-                }
-                dateTo={
-                  dateTo ||
-                  filteredTransactions[0]
-                    ?.transaction_date ||
-                  new Date()
-                    .toISOString()
-                    .slice(0, 10)
-                }
-              />
+              {agent && (
+  <PartyStatementDownload
+    partyType="agent"
+    party={{
+      sl: agent.sl,
+      name: agent.name,
+      phone: agent.phone,
+    }}
+    transactions={filteredTransactions.map(
+      (transaction) => ({
+        id: transaction.id,
+        transaction_date:
+          transaction.transaction_date,
+        type: transaction.type,
+        amount: Number(transaction.amount),
+        description:
+          transaction.description,
+        payment_method:
+          transaction.payment_method,
+        party_type: "agent",
+        agent_id:
+          transaction.agent_id,
+        agency_id:
+          transaction.agency_id,
+      }),
+    )}
+    summary={{
+      totalIncome: summary.income,
+      totalExpense: summary.expense,
+      netBalance: summary.net,
+    }}
+    dateFrom={
+      dateFrom ||
+      filteredTransactions.at(-1)
+        ?.transaction_date ||
+      new Date()
+        .toISOString()
+        .slice(0, 10)
+    }
+    dateTo={
+      dateTo ||
+      filteredTransactions[0]
+        ?.transaction_date ||
+      new Date()
+        .toISOString()
+        .slice(0, 10)
+    }
+  />
+)}
 
             </div>
           </div>

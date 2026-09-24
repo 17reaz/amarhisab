@@ -389,58 +389,55 @@ export function AgencyProfilePage() {
 
               {/* Generate PDF */}
 
-              <PartyStatementDownload
-                partyType="agency"
-                party={{
-                  sl: agency.sl,
-                  name: agency.name,
-                  phone: agency.phone,
-                }}
-                transactions={filteredTransactions.map(
-                  (transaction) => ({
-                    id: transaction.id,
-                    transaction_date:
-                      transaction.transaction_date,
-                    type: transaction.type,
-                    amount: Number(
-                      transaction.amount,
-                    ),
-                    description:
-                      transaction.description,
-                    payment_method:
-                      transaction.payment_method,
-                    party_type: "agency",
-                    agent_id:
-                      transaction.agent_id,
-                    agency_id:
-                      transaction.agency_id,
-                  }),
-                )}
-                summary={{
-                  totalIncome:
-                    summary.income,
-                  totalExpense:
-                    summary.expense,
-                  netBalance:
-                    summary.net,
-                }}
-                dateFrom={
-                  dateFrom ||
-                  filteredTransactions.at(-1)
-                    ?.transaction_date ||
-                  new Date()
-                    .toISOString()
-                    .slice(0, 10)
-                }
-                dateTo={
-                  dateTo ||
-                  filteredTransactions[0]
-                    ?.transaction_date ||
-                  new Date()
-                    .toISOString()
-                    .slice(0, 10)
-                }
-              />
+              {agency && (
+  <PartyStatementDownload
+    partyType="agency"
+    party={{
+      sl: agency.sl,
+      name: agency.name,
+      phone: agency.phone,
+    }}
+    transactions={filteredTransactions.map(
+      (transaction) => ({
+        id: transaction.id,
+        transaction_date:
+          transaction.transaction_date,
+        type: transaction.type,
+        amount: Number(transaction.amount),
+        description:
+          transaction.description,
+        payment_method:
+          transaction.payment_method,
+        party_type: "agency",
+        agent_id:
+          transaction.agent_id,
+        agency_id:
+          transaction.agency_id,
+      }),
+    )}
+    summary={{
+      totalIncome: summary.income,
+      totalExpense: summary.expense,
+      netBalance: summary.net,
+    }}
+    dateFrom={
+      dateFrom ||
+      filteredTransactions.at(-1)
+        ?.transaction_date ||
+      new Date()
+        .toISOString()
+        .slice(0, 10)
+    }
+    dateTo={
+      dateTo ||
+      filteredTransactions[0]
+        ?.transaction_date ||
+      new Date()
+        .toISOString()
+        .slice(0, 10)
+    }
+  />
+)}
 
             </div>
           </div>
