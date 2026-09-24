@@ -124,70 +124,53 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         ) : null}
+
         {/* Income / Expense */}
         <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-                  <ArrowDownLeft className="size-4" />
-                </div>
+  <Card>
+    <CardContent className="flex items-center gap-3 p-4">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+        <ArrowDownLeft className="size-5" />
+      </div>
 
-                <span className="text-sm text-muted-foreground">
-                  Income
-                </span>
-              </div>
+      <div className="min-w-0 flex-1">
+        <span className="text-xs text-muted-foreground">Income</span>
 
-              <p className="mt-3 text-lg font-semibold">
-                {loading
-                  ? "..."
-                  : formatCurrency(
-                      summary?.income ?? 0,
-                    )}
-              </p>
+        <p className="truncate text-base font-semibold">
+          {loading ? "..." : formatCurrency(summary?.income ?? 0)}
+        </p>
 
-              {!loading ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Today{" "}
-                  {formatCurrency(
-                    summary?.todayIncome ?? 0,
-                  )}
-                </p>
-              ) : null}
-            </CardContent>
-          </Card>
+        {!loading ? (
+          <p className="truncate text-xs text-muted-foreground">
+            Today {formatCurrency(summary?.todayIncome ?? 0)}
+          </p>
+        ) : null}
+      </div>
+    </CardContent>
+  </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-                  <ArrowUpRight className="size-4" />
-                </div>
+  <Card>
+    <CardContent className="flex items-center gap-3 p-4">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+        <ArrowUpRight className="size-5" />
+      </div>
 
-                <span className="text-sm text-muted-foreground">
-                  Expense
-                </span>
-              </div>
+      <div className="min-w-0 flex-1">
+        <span className="text-xs text-muted-foreground">Expense</span>
 
-              <p className="mt-3 text-lg font-semibold">
-                {loading
-                  ? "..."
-                  : formatCurrency(
-                      summary?.expense ?? 0,
-                    )}
-              </p>
+        <p className="truncate text-base font-semibold">
+          {loading ? "..." : formatCurrency(summary?.expense ?? 0)}
+        </p>
 
-              {!loading ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Today{" "}
-                  {formatCurrency(
-                    summary?.todayExpense ?? 0,
-                  )}
-                </p>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
+        {!loading ? (
+          <p className="truncate text-xs text-muted-foreground">
+            Today {formatCurrency(summary?.todayExpense ?? 0)}
+          </p>
+        ) : null}
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
         {/* Quick Actions */}
         <section className="space-y-3">
