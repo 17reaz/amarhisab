@@ -1,5 +1,6 @@
-import { supabase } from "@/lib/supabase"
 import { db } from "@/lib/db"
+import { supabase } from "@/lib/supabase"
+
 import type {
   Agency,
   CreateAgencyInput,
@@ -62,7 +63,12 @@ export async function createAgency(
     throw error
   }
 
-  return data as Agency
+  const agency = data as Agency
+
+  // Supabase success → update local cache
+  await db.agencies.put(agency)
+
+  return agency
 }
 
 export async function updateAgency(
@@ -83,7 +89,12 @@ export async function updateAgency(
     throw error
   }
 
-  return data as Agency
+  const agency = data as Agency
+
+  // Supabase success → update local cache
+  await db.agencies.put(agency)
+
+  return agency
 }
 
 export async function setAgencyActive(
@@ -103,8 +114,14 @@ export async function setAgencyActive(
     throw error
   }
 
-  return data as Agency
+  const agency = data as Agency
+
+  // Supabase success → update local cache
+  await db.agencies.put(agency)
+
+  return agency
 }
+
 export async function getAgencyBalance(
   agencyId: string,
 ): Promise<number> {
@@ -130,6 +147,7 @@ export async function getAgencyBalance(
     0,
   )
 }
+
 export interface AgencyStats {
   balance: number
   income: number
@@ -147,7 +165,9 @@ export async function getAgencyStats(
     .eq("agency_id", agencyId)
     .eq("party_type", "agency")
     .eq("is_active", true)
-    .order("transaction_date", { ascending: false })
+    .order("transaction_date", {
+      ascending: false,
+    })
 
   if (error) {
     throw error
@@ -173,6 +193,7 @@ export async function getAgencyStats(
     income,
     expense,
     transactionCount: rows.length,
-    lastTransactionDate: rows[0]?.transaction_date ?? null,
+    lastTransactionDate:
+      rows[0]?.transaction_date ?? null,
   }
 }
