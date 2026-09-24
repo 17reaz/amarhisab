@@ -4,9 +4,11 @@ import {
   ChevronUp,
   FileText,
   Phone,
+  Plus,
   RefreshCw,
 } from "lucide-react"
 import { PartyStatementDownload } from "../../reports/components/party-statement-download"
+import { TransactionSheet } from "../../transactions/components/transaction-sheet"
 import {
   useNavigate,
   useParams,
@@ -73,7 +75,8 @@ export function AgentProfilePage() {
 
   const [reportOpen, setReportOpen] =
     useState(false)
-
+const [transactionOpen, setTransactionOpen] =
+  useState(false)
   async function load() {
     if (!id) return
 
@@ -220,25 +223,39 @@ export function AgentProfilePage() {
           </div>
 
           {/* Report Action */}
+                    <div className="flex shrink-0 items-center gap-1">
+  <Button
+    variant="ghost"
+    size="icon"
+    className="size-10 rounded-full"
+    onClick={() =>
+      setTransactionOpen(true)
+    }
+    aria-label="Add transaction"
+  >
+    <Plus className="size-5" />
+  </Button>
 
-          <Button
-            variant={
-              reportOpen
-                ? "secondary"
-                : "ghost"
-            }
-            size="icon"
-            className="size-10 shrink-0 rounded-full"
-            onClick={() =>
-              setReportOpen(
-                (current) => !current,
-              )
-            }
-            aria-label="Generate statement"
-            aria-expanded={reportOpen}
-          >
-            <FileText className="size-5" />
-          </Button>
+  <Button
+    variant={
+      reportOpen
+        ? "secondary"
+        : "ghost"
+    }
+    size="icon"
+    className="size-10 rounded-full"
+    onClick={() =>
+      setReportOpen(
+        (current) => !current,
+      )
+    }
+    aria-label="Generate statement"
+    aria-expanded={reportOpen}
+  >
+    <FileText className="size-5" />
+  </Button>
+</div>
+          
         </div>
 
         {/* Report Options */}
@@ -661,6 +678,17 @@ export function AgentProfilePage() {
         ) : null}
 
       </div>
+      <TransactionSheet
+  open={transactionOpen}
+  onOpenChange={setTransactionOpen}
+  agents={agent ? [agent] : []}
+  agencies={[]}
+  lockedPartyType="agent"
+  lockedPartyId={agent?.id}
+  onSaved={() => {
+    void load()
+  }}
+/>
     </AppShell>
   )
 }
