@@ -394,34 +394,39 @@ const handleDelete = async () => {
               <Label>Agent</Label>
 
               <Select
-                value={agentId}
-                onValueChange={(value) => setAgentId(value ?? "")}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select agent" />
-                </SelectTrigger>
+  value={agentId}
+  onValueChange={(value) => setAgentId(value ?? "")}
+  disabled={loading}
+>
+  <SelectTrigger>
+    <SelectValue placeholder="Select agent">
+      {agentId
+        ? (() => {
+            const agent = agents.find(
+              (item) => item.id === agentId,
+            )
 
-                <SelectContent>
-                  {agents
-                    .filter(
-                      (agent) =>
-                        agent.is_active,
-                    )
-                    .map((agent) => (
-                      <SelectItem
-                        key={agent.id}
-                        value={agent.id}
-                      >
-                        {String(agent.sl).padStart(
-                          4,
-                          "0",
-                        )}{" "}
-                        — {agent.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+            return agent
+              ? `${agent.name}`
+              : "Select agent"
+          })()
+        : "Select agent"}
+    </SelectValue>
+  </SelectTrigger>
+
+  <SelectContent>
+    {agents
+      .filter((agent) => agent.is_active)
+      .map((agent) => (
+        <SelectItem
+          key={agent.id}
+          value={agent.id}
+        >
+          {agent.name}
+        </SelectItem>
+      ))}
+  </SelectContent>
+</Select>
             </div>
           ) : null}
 
@@ -432,34 +437,39 @@ const handleDelete = async () => {
               <Label>Agency</Label>
 
               <Select
-                value={agencyId}
-                onValueChange={(value) => setAgencyId(value ?? "")}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select agency" />
-                </SelectTrigger>
+  value={agencyId}
+  onValueChange={(value) => setAgencyId(value ?? "")}
+  disabled={loading}
+>
+  <SelectTrigger>
+    <SelectValue placeholder="Select agency">
+      {agencyId
+        ? (() => {
+            const agency = agencies.find(
+              (item) => item.id === agencyId,
+            )
 
-                <SelectContent>
-                  {agencies
-                    .filter(
-                      (agency) =>
-                        agency.is_active,
-                    )
-                    .map((agency) => (
-                      <SelectItem
-                        key={agency.id}
-                        value={agency.id}
-                      >
-                        {String(agency.sl).padStart(
-                          4,
-                          "0",
-                        )}{" "}
-                        — {agency.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+            return agency
+              ? `${agency.name}`
+              : "Select agency"
+          })()
+        : "Select agency"}
+    </SelectValue>
+  </SelectTrigger>
+
+  <SelectContent>
+    {agencies
+      .filter((agency) => agency.is_active)
+      .map((agency) => (
+        <SelectItem
+          key={agency.id}
+          value={agency.id}
+        >
+          {agency.name}
+        </SelectItem>
+      ))}
+  </SelectContent>
+</Select>
             </div>
           ) : null}
 
