@@ -11,7 +11,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 
-import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 
 import { ReportFilters } from "../components/report-filters"
@@ -217,7 +216,7 @@ export function ReportsPage() {
   }
 
   return (
-    <AppShell title="Reports">
+    <>
       {/* Sticky page header */}
       <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PageHeader
@@ -482,6 +481,6 @@ export function ReportsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </AppShell>
+    </>
   )
 }

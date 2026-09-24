@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom"
 
 import { Input } from "@/components/ui/input"
 
-import { AppShell } from "../../components/app-shell"
 import {
   getParties,
   syncParties,
@@ -121,7 +120,7 @@ export function PartiesPage() {
   }
 
   return (
-    <AppShell title="Parties">
+    <>
       {/* Sticky search — always stuck below AppHeader */}
       <div className="sticky top-14 z-30 -mx-4 mb-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="relative">
@@ -236,6 +235,6 @@ export function PartiesPage() {
             </div>
           )}
       </div>
-    </AppShell>
+    </>
   )
 }
