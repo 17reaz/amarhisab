@@ -148,8 +148,8 @@ export function TransactionsPage() {
   const [filter, setFilter] = useState<FilterType>("all")
 
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
+const [refreshing, setRefreshing] = useState(false)
+const [error, setError] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null)
@@ -158,34 +158,46 @@ export function TransactionsPage() {
   const [detailTransaction, setDetailTransaction] =
     useState<Transaction | null>(null)
 
-  const loadData = async () => {
-    try {
+ const loadData = async (isRefresh = false) => {
+  try {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
       setLoading(true)
-      setError(null)
+    }
 
-      const [transactionData, agentData, agencyData] = await Promise.all([
+    setError(null)
+
+    const [transactionData, agentData, agencyData] =
+      await Promise.all([
         getTransactions(),
         getAgents(),
         getAgencies(),
       ])
 
-      setTransactions(transactionData)
-      setAgents(agentData)
-      setAgencies(agencyData)
-    } catch (err) {
-      console.error("Failed to load transactions:", err)
+    setTransactions(transactionData)
+    setAgents(agentData)
+    setAgencies(agencyData)
+  } catch (err) {
+    console.error(
+      "Failed to load transactions:",
+      err,
+    )
 
-      setError(
-        err instanceof Error ? err.message : "Failed to load transactions.",
-      )
-    } finally {
-      setLoading(false)
-    }
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Failed to load transactions.",
+    )
+  } finally {
+    setLoading(false)
+    setRefreshing(false)
   }
+}
 
-  useEffect(() => {
-    void loadData()
-  }, [])
+useEffect(() => {
+  void loadData()
+}, [])
 
   const handleToggleSearch = () => {
     setSearchOpen((current) => {
@@ -337,17 +349,19 @@ export function TransactionsPage() {
               </Button>
 
               <Button
-                variant="outline"
-                size="icon"
-                className="size-10 rounded-full"
-                onClick={() => void loadData()}
-                disabled={loading}
-                aria-label="Refresh transactions"
-              >
-                <RefreshCw
-                  className={`size-4 ${loading ? "animate-spin" : ""}`}
-                />
-              </Button>
+  variant="outline"
+  size="icon"
+  className="size-10 rounded-full"
+  onClick={() => void loadData(true)}
+  disabled={loading || refreshing}
+  aria-label="Refresh transactions"
+>
+  <RefreshCw
+    className={`size-4 ${
+      loading || refreshing ? "animate-spin" : ""
+    }`}
+  />
+</Button>
 
               <Button
                 size="icon"
