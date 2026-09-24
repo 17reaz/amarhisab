@@ -16,6 +16,12 @@ interface TransactionStatementDocumentProps {
   summary: ReportSummary
   dateFrom: string
   dateTo: string
+  reportTitle?: string
+  party?: {
+    sl: number
+    name: string
+    phone: string | null
+  } | null
 }
 
 const styles = StyleSheet.create({
@@ -258,6 +264,8 @@ export function TransactionStatementDocument({
   summary,
   dateFrom,
   dateTo,
+  reportTitle = "TRANSACTION STATEMENT",
+  party,
 }: TransactionStatementDocumentProps) {
   return (
     <Document
@@ -278,13 +286,27 @@ export function TransactionStatementDocument({
           </Text>
 
           <Text style={styles.reportTitle}>
-            TRANSACTION STATEMENT
-          </Text>
+  {reportTitle}
+</Text>
 
-          <Text style={styles.meta}>
-            Period: {formatDate(dateFrom)} —{" "}
-            {formatDate(dateTo)}
-          </Text>
+<Text style={styles.meta}>
+  Period: {formatDate(dateFrom)} —{" "}
+  {formatDate(dateTo)}
+</Text>
+
+{party ? (
+  <View style={{ marginTop: 6 }}>
+    <Text style={styles.meta}>
+      {party.name} · SL {party.sl}
+    </Text>
+
+    {party.phone ? (
+      <Text style={styles.meta}>
+        Phone: {party.phone}
+      </Text>
+    ) : null}
+  </View>
+) : null}
         </View>
 
         <View style={styles.summaryRow}>

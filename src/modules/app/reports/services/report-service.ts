@@ -4,6 +4,7 @@ import type {
   ReportFilters,
   ReportTransaction,
   ReportSummary,
+  ReportParty,
 } from "../types/report"
 
 const TRANSACTION_COLUMNS = `
@@ -110,4 +111,41 @@ export function calculateReportSummary(
     totalExpense,
     netBalance: totalIncome - totalExpense,
   }
+}
+export async function getReportParty(
+  filters: ReportFilters,
+): Promise<ReportParty | null> {
+  if (!filters.partyId) {
+    return null
+  }
+
+  if (filters.partyType === "agent") {
+    const { data, error } = await supabase
+      .from("agents")
+      .select("id, sl, name, phone")
+      .eq("id", filters.partyId)
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return data as ReportParty
+  }
+
+  if (filters.partyType === "agency") {
+    const { data, error } = await supabase
+      .from("agencies")
+      .select("id, sl, name, phone")
+      .eq("id", filters.partyId)
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return data as ReportParty
+  }
+
+  return null
 }

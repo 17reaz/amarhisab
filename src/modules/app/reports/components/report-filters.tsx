@@ -18,15 +18,16 @@ import { getAgencies } from "../../agencies/services/agency-service"
 import type { Agent } from "../../agents/types/agent"
 import type { Agency } from "../../agencies/types/agency"
 import type {
-  ReportFilters,
+  ReportFilters as ReportFiltersType,
   ReportPartyType,
   ReportPaymentMethod,
   ReportTransactionType,
+  ReportType,
 } from "../types/report"
 
 interface ReportFiltersProps {
-  filters: ReportFilters
-  onChange: (filters: ReportFilters) => void
+  filters: ReportFiltersType
+  onChange: (filters: ReportFiltersType) => void
   onGenerate: () => void
   loading?: boolean
 }
@@ -63,11 +64,44 @@ export function ReportFilters({
   }, [])
 
   function update(
-    values: Partial<ReportFilters>,
+    values: Partial<ReportFiltersType>,
   ) {
     onChange({
       ...filters,
       ...values,
+    })
+  }
+
+  function handleReportTypeChange(
+    value: string | null,
+  ) {
+    const reportType =
+      (value ?? "transaction") as ReportType
+
+    if (reportType === "agent") {
+      update({
+        reportType,
+        partyType: "agent",
+        partyId: "",
+      })
+
+      return
+    }
+
+    if (reportType === "agency") {
+      update({
+        reportType,
+        partyType: "agency",
+        partyId: "",
+      })
+
+      return
+    }
+
+    update({
+      reportType: "transaction",
+      partyType: "all",
+      partyId: "",
     })
   }
 
@@ -83,8 +117,59 @@ export function ReportFilters({
     })
   }
 
+  const showAgent =
+    filters.reportType === "agent" ||
+    (
+      filters.reportType === "transaction" &&
+      filters.partyType === "agent"
+    )
+
+  const showAgency =
+    filters.reportType === "agency" ||
+    (
+      filters.reportType === "transaction" &&
+      filters.partyType === "agency"
+    )
+
+  const canGenerate =
+    Boolean(filters.dateFrom) &&
+    Boolean(filters.dateTo) &&
+    (
+      filters.reportType === "transaction" ||
+      Boolean(filters.partyId)
+    )
+
   return (
     <div className="space-y-5">
+      {/* Report Type */}
+      <div className="space-y-2">
+        <Label>Report Type</Label>
+
+        <Select
+          value={filters.reportType}
+          onValueChange={handleReportTypeChange}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select report type" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="transaction">
+              Transaction Statement
+            </SelectItem>
+
+            <SelectItem value="agent">
+              Agent Statement
+            </SelectItem>
+
+            <SelectItem value="agency">
+              Agency Statement
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Date */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="report-date-from">
@@ -95,6 +180,7 @@ export function ReportFilters({
             id="report-date-from"
             type="date"
             value={filters.dateFrom}
+            max={filters.dateTo || undefined}
             onChange={(event) =>
               update({
                 dateFrom: event.target.value,
@@ -112,6 +198,7 @@ export function ReportFilters({
             id="report-date-to"
             type="date"
             value={filters.dateTo}
+            min={filters.dateFrom || undefined}
             onChange={(event) =>
               update({
                 dateTo: event.target.value,
@@ -121,6 +208,127 @@ export function ReportFilters({
         </div>
       </div>
 
+      {/* Transaction Party Filter */}
+      {filters.reportType === "transaction" ? (
+        <div className="space-y-2">
+          <Label>Party</Label>
+
+          <Select
+            value={filters.partyType}
+            onValueChange={handlePartyTypeChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select party" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">
+                All Parties
+              </SelectItem>
+
+              <SelectItem value="agent">
+                Agent
+              </SelectItem>
+
+              <SelectItem value="agency">
+                Agency
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {/* Agent */}
+      {showAgent ? (
+        <div className="space-y-2">
+          <Label>Agent</Label>
+
+          <Select
+            value={
+              filters.partyType === "agent"
+                ? filters.partyId
+                : ""
+            }
+            onValueChange={(value) =>
+              update({
+                partyType: "agent",
+                partyId: value ?? "",
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Agent" />
+            </SelectTrigger>
+
+            <SelectContent>
+              {agents.length === 0 ? (
+                <SelectItem
+                  value="__empty"
+                  disabled
+                >
+                  No agents found
+                </SelectItem>
+              ) : (
+                agents.map((agent) => (
+                  <SelectItem
+                    key={agent.id}
+                    value={agent.id}
+                  >
+                    {agent.name} · SL {agent.sl}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {/* Agency */}
+      {showAgency ? (
+        <div className="space-y-2">
+          <Label>Agency</Label>
+
+          <Select
+            value={
+              filters.partyType === "agency"
+                ? filters.partyId
+                : ""
+            }
+            onValueChange={(value) =>
+              update({
+                partyType: "agency",
+                partyId: value ?? "",
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Agency" />
+            </SelectTrigger>
+
+            <SelectContent>
+              {agencies.length === 0 ? (
+                <SelectItem
+                  value="__empty"
+                  disabled
+                >
+                  No agencies found
+                </SelectItem>
+              ) : (
+                agencies.map((agency) => (
+                  <SelectItem
+                    key={agency.id}
+                    value={agency.id}
+                  >
+                    {agency.name} · SL {agency.sl}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {/* Transaction Type */}
       <div className="space-y-2">
         <Label>Transaction Type</Label>
 
@@ -154,93 +362,7 @@ export function ReportFilters({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label>Party</Label>
-
-        <Select
-          value={filters.partyType}
-          onValueChange={handlePartyTypeChange}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select party" />
-          </SelectTrigger>
-
-          <SelectContent>
-            <SelectItem value="all">
-              All Parties
-            </SelectItem>
-
-            <SelectItem value="agent">
-              Agent
-            </SelectItem>
-
-            <SelectItem value="agency">
-              Agency
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {filters.partyType === "agent" ? (
-        <div className="space-y-2">
-          <Label>Agent</Label>
-
-          <Select
-            value={filters.partyId || ""}
-            onValueChange={(value) =>
-              update({
-                partyId: value ?? "",
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Agents" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {agents.map((agent) => (
-                <SelectItem
-                  key={agent.id}
-                  value={agent.id}
-                >
-                  {agent.name} · SL {agent.sl}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : null}
-
-      {filters.partyType === "agency" ? (
-        <div className="space-y-2">
-          <Label>Agency</Label>
-
-          <Select
-            value={filters.partyId || ""}
-            onValueChange={(value) =>
-              update({
-                partyId: value ?? "",
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Agencies" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {agencies.map((agency) => (
-                <SelectItem
-                  key={agency.id}
-                  value={agency.id}
-                >
-                  {agency.name} · SL {agency.sl}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : null}
-
+      {/* Payment Method */}
       <div className="space-y-2">
         <Label>Payment Method</Label>
 
@@ -286,15 +408,12 @@ export function ReportFilters({
         </Select>
       </div>
 
+      {/* Generate */}
       <Button
         type="button"
         className="h-11 w-full"
         onClick={onGenerate}
-        disabled={
-          loading ||
-          !filters.dateFrom ||
-          !filters.dateTo
-        }
+        disabled={loading || !canGenerate}
       >
         <FileDown className="mr-2 size-4" />
 
