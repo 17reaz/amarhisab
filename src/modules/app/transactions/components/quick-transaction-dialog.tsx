@@ -11,13 +11,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -114,23 +107,24 @@ export function QuickTransactionDialog({
   }, [partyType])
 
   const filteredAgents = useMemo(() => {
-    const search = partySearch.trim().toLowerCase()
+    const search =
+      partySearch.trim().toLowerCase()
 
     return agents
       .filter((agent) => agent.is_active)
       .filter((agent) => {
         if (!search) return true
 
-        return (
-          agent.name.toLowerCase().includes(search) ||
-          agent.code.toLowerCase().includes(search)
-        )
+        return agent.name
+          .toLowerCase()
+          .includes(search)
       })
       .slice(0, 20)
   }, [agents, partySearch])
 
   const filteredAgencies = useMemo(() => {
-    const search = partySearch.trim().toLowerCase()
+    const search =
+      partySearch.trim().toLowerCase()
 
     return agencies
       .filter((agency) => agency.is_active)
@@ -242,6 +236,32 @@ export function QuickTransactionDialog({
       ? selectedAgent?.name
       : selectedAgency?.name
 
+  const paymentMethods: {
+    value: PaymentMethod
+    label: string
+  }[] = [
+    {
+      value: "cash",
+      label: "Cash",
+    },
+    {
+      value: "bkash",
+      label: "bKash",
+    },
+    {
+      value: "nagad",
+      label: "Nagad",
+    },
+    {
+      value: "bank",
+      label: "Bank",
+    },
+    {
+      value: "other",
+      label: "Other",
+    },
+  ]
+
   return (
     <Dialog
       open={open}
@@ -262,7 +282,7 @@ export function QuickTransactionDialog({
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-          {/* Party Type */}
+          {/* Party */}
 
           <div className="space-y-2">
             <Label>Party</Label>
@@ -275,7 +295,7 @@ export function QuickTransactionDialog({
                     ? "default"
                     : "outline"
                 }
-                className="h-11 justify-center gap-2"
+                className="h-10 justify-center gap-2"
                 onClick={() =>
                   setPartyType("agent")
                 }
@@ -292,7 +312,7 @@ export function QuickTransactionDialog({
                     ? "default"
                     : "outline"
                 }
-                className="h-11 justify-center gap-2"
+                className="h-10 justify-center gap-2"
                 onClick={() =>
                   setPartyType("agency")
                 }
@@ -335,7 +355,7 @@ export function QuickTransactionDialog({
 
             <div className="max-h-44 overflow-y-auto rounded-lg border">
               {partyType === "agent" ? (
-                filteredAgents.length ? (
+                filteredAgents.length > 0 ? (
                   <div className="divide-y">
                     {filteredAgents.map(
                       (agent) => {
@@ -367,10 +387,6 @@ export function QuickTransactionDialog({
                               <p className="truncate text-sm font-medium">
                                 {agent.name}
                               </p>
-
-                              <p className="text-xs text-muted-foreground">
-                                {agent.code}
-                              </p>
                             </div>
 
                             {selected ? (
@@ -386,7 +402,7 @@ export function QuickTransactionDialog({
                     No agents found.
                   </div>
                 )
-              ) : filteredAgencies.length ? (
+              ) : filteredAgencies.length > 0 ? (
                 <div className="divide-y">
                   {filteredAgencies.map(
                     (agency) => {
@@ -445,133 +461,125 @@ export function QuickTransactionDialog({
             ) : null}
           </div>
 
-          {/* Amount */}
+          {/* Amount + Date */}
 
-          <div className="space-y-2">
-            <Label htmlFor="quick-transaction-amount">
-              Amount
-            </Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="quick-transaction-amount">
+                Amount
+              </Label>
 
-            <Input
-              id="quick-transaction-amount"
-              value={amount}
-              onChange={(event) =>
-                setAmount(
-                  event.target.value,
-                )
-              }
-              placeholder="0.00"
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              disabled={loading}
-              autoFocus
-            />
+              <Input
+                id="quick-transaction-amount"
+                value={amount}
+                onChange={(event) =>
+                  setAmount(
+                    event.target.value,
+                  )
+                }
+                placeholder="0.00"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quick-transaction-date">
+                Date
+              </Label>
+
+              <Input
+                id="quick-transaction-date"
+                type="date"
+                value={transactionDate}
+                onChange={(event) =>
+                  setTransactionDate(
+                    event.target.value,
+                  )
+                }
+                disabled={loading}
+              />
+            </div>
           </div>
 
           {/* Payment Method */}
 
           <div className="space-y-2">
-            <Label>
-              Payment Method
-            </Label>
+            <Label>Payment Method</Label>
 
-            <Select
-              value={paymentMethod}
-              onValueChange={(value) =>
-                setPaymentMethod(
-                  value as PaymentMethod,
-                )
-              }
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
+            <div className="grid grid-cols-5 gap-1.5">
+              {paymentMethods.map(
+                (method) => {
+                  const selected =
+                    paymentMethod ===
+                    method.value
 
-              <SelectContent>
-                <SelectItem value="cash">
-                  Cash
-                </SelectItem>
-
-                <SelectItem value="bkash">
-                  bKash
-                </SelectItem>
-
-                <SelectItem value="nagad">
-                  Nagad
-                </SelectItem>
-
-                <SelectItem value="bank">
-                  Bank
-                </SelectItem>
-
-                <SelectItem value="other">
-                  Other
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  return (
+                    <Button
+                      key={method.value}
+                      type="button"
+                      variant={
+                        selected
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-9 px-2 text-xs"
+                      disabled={loading}
+                      onClick={() =>
+                        setPaymentMethod(
+                          method.value,
+                        )
+                      }
+                    >
+                      {method.label}
+                    </Button>
+                  )
+                },
+              )}
+            </div>
           </div>
 
-          {/* Date */}
+          {/* Description + Reference */}
 
-          <div className="space-y-2">
-            <Label htmlFor="quick-transaction-date">
-              Date
-            </Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="quick-transaction-description">
+                Description
+              </Label>
 
-            <Input
-              id="quick-transaction-date"
-              type="date"
-              value={transactionDate}
-              onChange={(event) =>
-                setTransactionDate(
-                  event.target.value,
-                )
-              }
-              disabled={loading}
-            />
-          </div>
+              <Input
+                id="quick-transaction-description"
+                value={description}
+                onChange={(event) =>
+                  setDescription(
+                    event.target.value,
+                  )
+                }
+                placeholder="Description"
+                disabled={loading}
+              />
+            </div>
 
-          {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="quick-transaction-reference">
+                Reference
+              </Label>
 
-          <div className="space-y-2">
-            <Label htmlFor="quick-transaction-description">
-              Description
-            </Label>
-
-            <Input
-              id="quick-transaction-description"
-              value={description}
-              onChange={(event) =>
-                setDescription(
-                  event.target.value,
-                )
-              }
-              placeholder="Transaction description"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Reference */}
-
-          <div className="space-y-2">
-            <Label htmlFor="quick-transaction-reference">
-              Reference
-            </Label>
-
-            <Input
-              id="quick-transaction-reference"
-              value={referenceNo}
-              onChange={(event) =>
-                setReferenceNo(
-                  event.target.value,
-                )
-              }
-              placeholder="Reference number"
-              disabled={loading}
-            />
+              <Input
+                id="quick-transaction-reference"
+                value={referenceNo}
+                onChange={(event) =>
+                  setReferenceNo(
+                    event.target.value,
+                  )
+                }
+                placeholder="Reference no."
+                disabled={loading}
+              />
+            </div>
           </div>
 
           {/* Error */}
