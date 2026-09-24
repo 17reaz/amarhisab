@@ -3,6 +3,7 @@ import type { FormEvent } from "react"
 import {
   Building2,
   Check,
+  ChevronDown,
   Search,
   UserRound,
 } from "lucide-react"
@@ -61,6 +62,10 @@ export function QuickTransactionDialog({
   const [partySearch, setPartySearch] =
     useState("")
 
+  // NEW: controls whether the search + list panel is visible
+  const [partyPickerOpen, setPartyPickerOpen] =
+    useState(false)
+
   const [description, setDescription] =
     useState("")
 
@@ -85,6 +90,7 @@ export function QuickTransactionDialog({
     setAgentId("")
     setAgencyId("")
     setPartySearch("")
+    setPartyPickerOpen(false)
 
     setDescription("")
     setReferenceNo("")
@@ -98,6 +104,7 @@ export function QuickTransactionDialog({
 
   useEffect(() => {
     setPartySearch("")
+    setPartyPickerOpen(false)
 
     if (partyType === "agent") {
       setAgencyId("")
@@ -324,7 +331,7 @@ export function QuickTransactionDialog({
             </div>
           </div>
 
-          {/* Party Search */}
+          {/* Party Picker (click to open search + list) */}
 
           <div className="space-y-2">
             <Label>
@@ -333,131 +340,172 @@ export function QuickTransactionDialog({
                 : "Select Agency"}
             </Label>
 
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-              <Input
-                value={partySearch}
-                onChange={(event) =>
-                  setPartySearch(
-                    event.target.value,
-                  )
-                }
-                placeholder={
-                  partyType === "agent"
-                    ? "Search agent..."
-                    : "Search agency..."
-                }
-                className="pl-9"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="max-h-44 overflow-y-auto rounded-lg border">
-              {partyType === "agent" ? (
-                filteredAgents.length > 0 ? (
-                  <div className="divide-y">
-                    {filteredAgents.map(
-                      (agent) => {
-                        const selected =
-                          agent.id === agentId
-
-                        return (
-                          <button
-                            key={agent.id}
-                            type="button"
-                            disabled={loading}
-                            onClick={() => {
-                              setAgentId(
-                                agent.id,
-                              )
-                              setError(null)
-                            }}
-                            className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
-                              selected
-                                ? "bg-muted"
-                                : ""
-                            }`}
-                          >
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
-                              <UserRound className="size-4" />
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {agent.name}
-                              </p>
-                            </div>
-
-                            {selected ? (
-                              <Check className="size-4 shrink-0" />
-                            ) : null}
-                          </button>
-                        )
-                      },
-                    )}
-                  </div>
-                ) : (
-                  <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                    No agents found.
-                  </div>
+            {/* Trigger button — shows selected party or placeholder */}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() =>
+                setPartyPickerOpen(
+                  (current) => !current,
                 )
-              ) : filteredAgencies.length > 0 ? (
-                <div className="divide-y">
-                  {filteredAgencies.map(
-                    (agency) => {
-                      const selected =
-                        agency.id === agencyId
+              }
+              className="flex h-10 w-full items-center gap-2 rounded-lg border border-input bg-transparent px-3 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 dark:bg-input/30 dark:hover:bg-input/50"
+            >
+              {partyType === "agent" ? (
+                <UserRound className="size-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <Building2 className="size-4 shrink-0 text-muted-foreground" />
+              )}
 
-                      return (
-                        <button
-                          key={agency.id}
-                          type="button"
-                          disabled={loading}
-                          onClick={() => {
-                            setAgencyId(
-                              agency.id,
-                            )
-                            setError(null)
-                          }}
-                          className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
-                            selected
-                              ? "bg-muted"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
-                            <Building2 className="size-4" />
-                          </div>
+              <span
+                className={`min-w-0 flex-1 truncate text-left ${
+                  selectedPartyName
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {selectedPartyName ??
+                  (partyType === "agent"
+                    ? "Select agent"
+                    : "Select agency")}
+              </span>
 
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">
-                              {agency.name}
-                            </p>
-                          </div>
+              <ChevronDown
+                className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                  partyPickerOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-                          {selected ? (
-                            <Check className="size-4 shrink-0" />
-                          ) : null}
-                        </button>
+            {/* Search + List — only visible when picker is open */}
+
+            {partyPickerOpen ? (
+              <div className="space-y-2 rounded-lg border p-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                  <Input
+                    autoFocus
+                    value={partySearch}
+                    onChange={(event) =>
+                      setPartySearch(
+                        event.target.value,
                       )
-                    },
+                    }
+                    placeholder={
+                      partyType === "agent"
+                        ? "Search agent..."
+                        : "Search agency..."
+                    }
+                    className="pl-9"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="max-h-44 overflow-y-auto rounded-lg border">
+                  {partyType === "agent" ? (
+                    filteredAgents.length > 0 ? (
+                      <div className="divide-y">
+                        {filteredAgents.map(
+                          (agent) => {
+                            const selected =
+                              agent.id === agentId
+
+                            return (
+                              <button
+                                key={agent.id}
+                                type="button"
+                                disabled={loading}
+                                onClick={() => {
+                                  setAgentId(
+                                    agent.id,
+                                  )
+                                  setError(null)
+                                  setPartyPickerOpen(
+                                    false,
+                                  )
+                                }}
+                                className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
+                                  selected
+                                    ? "bg-muted"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                                  <UserRound className="size-4" />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium">
+                                    {agent.name}
+                                  </p>
+                                </div>
+
+                                {selected ? (
+                                  <Check className="size-4 shrink-0" />
+                                ) : null}
+                              </button>
+                            )
+                          },
+                        )}
+                      </div>
+                    ) : (
+                      <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                        No agents found.
+                      </div>
+                    )
+                  ) : filteredAgencies.length > 0 ? (
+                    <div className="divide-y">
+                      {filteredAgencies.map(
+                        (agency) => {
+                          const selected =
+                            agency.id === agencyId
+
+                          return (
+                            <button
+                              key={agency.id}
+                              type="button"
+                              disabled={loading}
+                              onClick={() => {
+                                setAgencyId(
+                                  agency.id,
+                                )
+                                setError(null)
+                                setPartyPickerOpen(
+                                  false,
+                                )
+                              }}
+                              className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
+                                selected
+                                  ? "bg-muted"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                                <Building2 className="size-4" />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium">
+                                  {agency.name}
+                                </p>
+                              </div>
+
+                              {selected ? (
+                                <Check className="size-4 shrink-0" />
+                              ) : null}
+                            </button>
+                          )
+                        },
+                      )}
+                    </div>
+                  ) : (
+                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      No agencies found.
+                    </div>
                   )}
                 </div>
-              ) : (
-                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                  No agencies found.
-                </div>
-              )}
-            </div>
-
-            {selectedPartyName ? (
-              <p className="text-xs text-muted-foreground">
-                Selected:{" "}
-                <span className="font-medium text-foreground">
-                  {selectedPartyName}
-                </span>
-              </p>
+              </div>
             ) : null}
           </div>
 

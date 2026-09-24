@@ -1,32 +1,44 @@
 import { useEffect, useMemo, useState } from "react"
-import { Pencil, Plus, RefreshCw, Search, UserRound } from "lucide-react"
+import {
+  Plus,
+  RefreshCw,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
 import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
+import { PartyCard } from "../../components/ui/party-card"
 import { AgentSheet } from "../components/agent-sheet"
 import {
-  getAgentBalance,
+  getAgentStats,
   getAgents,
   setAgentActive,
 } from "../services/agent-service"
+import type { AgentStats } from "../services/agent-service"
 import type { Agent } from "../types/agent"
 
 export function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [search, setSearch] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] =
     useState<Agent | null>(null)
-    const [agentBalances, setAgentBalances] =
-  useState<Record<string, number>>({})
+
+  const [agentStats, setAgentStats] =
+    useState<Record<string, AgentStats>>({})
+
   const navigate = useNavigate()
+
   const loadAgents = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -39,20 +51,15 @@ export function AgentsPage() {
 
       const data = await getAgents()
 
-const balanceEntries = await Promise.all(
-  data.map(async (agent) => {
-    const balance = await getAgentBalance(
-      agent.id,
-    )
+      const statsEntries = await Promise.all(
+        data.map(async (agent) => {
+          const stats = await getAgentStats(agent.id)
+          return [agent.id, stats] as const
+        }),
+      )
 
-    return [agent.id, balance] as const
-  }),
-)
-
-setAgents(data)
-setAgentBalances(
-  Object.fromEntries(balanceEntries),
-)
+      setAgents(data)
+      setAgentStats(Object.fromEntries(statsEntries))
     } catch (err) {
       console.error("Failed to load agents:", err)
 
@@ -90,6 +97,18 @@ setAgentBalances(
   const handleAdd = () => {
     setSelectedAgent(null)
     setSheetOpen(true)
+  }
+
+  const handleToggleSearch = () => {
+    setSearchOpen((current) => {
+      const next = !current
+
+      if (!next) {
+        setSearch("")
+      }
+
+      return next
+    })
   }
 
   const handleEdit = (agent: Agent) => {
@@ -151,35 +170,59 @@ setAgentBalances(
 
   return (
     <AppShell title="Agents">
-      <div className="space-y-5">
+      {/* Sticky page header block — always stuck below AppHeader,
+          regardless of whether search is open */}
+      <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PageHeader
           title="Agents"
           description="Manage your agents"
           action={
-            <Button
-              size="icon"
-              className="size-10 rounded-full"
-              onClick={handleAdd}
-              aria-label="Add agent"
-            >
-              <Plus className="size-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={searchOpen ? "secondary" : "ghost"}
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleToggleSearch}
+                aria-label="Search agents"
+                aria-expanded={searchOpen}
+              >
+                {searchOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Search className="size-5" />
+                )}
+              </Button>
+
+              <Button
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleAdd}
+                aria-label="Add agent"
+              >
+                <Plus className="size-5" />
+              </Button>
+            </div>
           }
         />
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        {searchOpen ? (
+          <div className="relative mt-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-          <Input
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-            placeholder="Search agents..."
-            className="h-11 pl-9 pr-3"
-          />
-        </div>
+            <Input
+              autoFocus
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search agents..."
+              className="h-11 pl-9 pr-3"
+            />
+          </div>
+        ) : null}
+      </div>
 
+      <div className="space-y-5">
         {error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="text-sm text-destructive">
@@ -269,119 +312,35 @@ setAgentBalances(
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredAgents.map((agent) => (
-              <div
-  key={agent.id}
-  className="cursor-pointer rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40"
-  onClick={() =>
-    navigate(`/app/agents/${agent.id}`)
-  }
-><div className="mb-3 flex items-center justify-between">
-  <div>
-    <p className="text-xs text-muted-foreground">
-      Balance
-    </p>
+            {filteredAgents.map((agent) => {
+              const stats = agentStats[agent.id]
 
-    <p
-  className={`text-lg font-bold tracking-tight ${
-    (agentBalances[agent.id] ?? 0) < 0
-      ? "text-destructive"
-      : "text-foreground"
-  }`}
->
-  {(agentBalances[agent.id] ?? 0) < 0
-    ? "−"
-    : ""}
-
-  ৳
-  {Math.abs(
-    agentBalances[agent.id] ?? 0,
-  ).toLocaleString("en-BD", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}
-</p>
-  </div>
-
-  <span className="text-xs text-muted-foreground">
-    Current
-  </span>
-</div>
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
-                    {String(agent.sl).padStart(3, "0")}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-semibold">
-                          {agent.name}
-                        </h3>
-
-                        {agent.phone ? (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {agent.phone}
-                          </p>
-                        ) : (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            No phone number
-                          </p>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 shrink-0"
-                        onClick={(event) => {
-  event.stopPropagation()
-  handleEdit(agent)
-}}
-                        aria-label={`Edit ${agent.name}`}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-  event.stopPropagation()
-  handleToggleActive(agent)
-}}
-                        className="flex items-center gap-2"
-                      >
-                        <span
-                          className={`size-2.5 rounded-full ${
-                            agent.is_active
-                              ? "bg-emerald-500"
-                              : "bg-muted-foreground"
-                          }`}
-                        />
-
-                        <span
-                          className={`text-xs font-medium ${
-                            agent.is_active
-                              ? "text-emerald-600"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {agent.is_active
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
-                      </button>
-
-                      <span className="text-xs text-muted-foreground">
-                        SL #{agent.sl}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              return (
+                <PartyCard
+                  key={agent.id}
+                  sl={agent.sl}
+                  name={agent.name}
+                  phone={agent.phone}
+                  isActive={agent.is_active}
+                  balance={stats?.balance ?? 0}
+                  income={stats?.income ?? 0}
+                  expense={stats?.expense ?? 0}
+                  transactionCount={
+                    stats?.transactionCount ?? 0
+                  }
+                  lastActivityDate={
+                    stats?.lastTransactionDate ?? null
+                  }
+                  onClick={() =>
+                    navigate(`/app/agents/${agent.id}`)
+                  }
+                  onEdit={() => handleEdit(agent)}
+                  onToggleActive={() =>
+                    handleToggleActive(agent)
+                  }
+                />
+              )
+            })}
           </div>
         )}
 

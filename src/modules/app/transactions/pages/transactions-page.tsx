@@ -5,13 +5,22 @@ import {
   Plus,
   RefreshCw,
   Search,
+  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import { AppShell } from "../../components/app-shell"
+import { PageHeader } from "../../components/page-header"
 import { getAgents } from "../../agents/services/agent-service"
 import type { Agent } from "../../agents/types/agent"
 import { getAgencies } from "../../agencies/services/agency-service"
@@ -139,6 +148,7 @@ export function TransactionsPage() {
   const [agencies, setAgencies] = useState<Agency[]>([])
 
   const [search, setSearch] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
   const [filter, setFilter] = useState<FilterType>("all")
 
   const [loading, setLoading] = useState(true)
@@ -180,6 +190,18 @@ export function TransactionsPage() {
   useEffect(() => {
     void loadData()
   }, [])
+
+  const handleToggleSearch = () => {
+    setSearchOpen((current) => {
+      const next = !current
+
+      if (!next) {
+        setSearch("")
+      }
+
+      return next
+    })
+  }
 
   const getPartyName = useCallback(
     (transaction: Transaction) => {
@@ -293,33 +315,106 @@ export function TransactionsPage() {
 
   return (
     <AppShell title="Transactions">
+      {/* Sticky page header — always stuck below AppHeader.
+          Filters live inside this sticky block too:
+          - search closed  -> full filter row shown under the title
+          - search open    -> compact filter dropdown shown beside the search input */}
+      <div className="sticky top-14 z-30 -mx-4 mb-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <PageHeader
+          title="Transactions"
+          description="Track your income and expenses"
+          action={
+            <div className="flex items-center gap-2">
+              <Button
+                variant={searchOpen ? "secondary" : "ghost"}
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleToggleSearch}
+                aria-label="Search transactions"
+                aria-expanded={searchOpen}
+              >
+                {searchOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Search className="size-5" />
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={() => void loadData()}
+                disabled={loading}
+                aria-label="Refresh transactions"
+              >
+                <RefreshCw
+                  className={`size-4 ${loading ? "animate-spin" : ""}`}
+                />
+              </Button>
+
+              <Button
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleAdd}
+                aria-label="Add transaction"
+              >
+                <Plus className="size-5" />
+              </Button>
+            </div>
+          }
+        />
+
+        {searchOpen ? (
+  <div className="mt-3 flex items-center gap-2">
+    <div className="relative min-w-0 flex-1">
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+      <Input
+        autoFocus
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search transactions..."
+        className="h-11 rounded-lg pl-9 pr-3"
+      />
+    </div>
+
+    <Select
+  value={filter}
+  onValueChange={(value) =>
+    setFilter((value ?? "all") as FilterType)
+  }
+>
+  <SelectTrigger className="w-[110px] shrink-0 rounded-lg data-[size=default]:h-11">
+    <SelectValue placeholder="Filter" />
+  </SelectTrigger>
+
+  <SelectContent>
+    {FILTERS.map((item) => (
+      <SelectItem key={item.value} value={item.value}>
+        {item.label}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+  </div>
+) : (
+          /* Search closed: full filter row under the title, sticky */
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {FILTERS.map((item) => (
+              <Button
+                key={item.value}
+                variant={filter === item.value ? "default" : "outline"}
+                onClick={() => setFilter(item.value)}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold">Transactions</h1>
-
-            <p className="text-sm text-muted-foreground">
-              Track your income and expenses.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => void loadData()}
-              disabled={loading}
-            >
-              <RefreshCw className={loading ? "animate-spin" : ""} />
-            </Button>
-
-            <Button size="icon" onClick={handleAdd}>
-              <Plus />
-            </Button>
-          </div>
-        </div>
-
         {/* Summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
@@ -349,31 +444,6 @@ export function TransactionsPage() {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search transactions..."
-            className="pl-9"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="grid grid-cols-3 gap-2">
-          {FILTERS.map((item) => (
-            <Button
-              key={item.value}
-              variant={filter === item.value ? "default" : "outline"}
-              onClick={() => setFilter(item.value)}
-            >
-              {item.label}
-            </Button>
-          ))}
         </div>
 
         {/* Error */}

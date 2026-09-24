@@ -1,10 +1,18 @@
 import { useMemo, useState } from "react"
-import { FileText } from "lucide-react"
+import { FileText, Plus, Sparkles } from "lucide-react"
 import { pdf } from "@react-pdf/renderer"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 
 import { AppShell } from "../../components/app-shell"
+import { PageHeader } from "../../components/page-header"
 
 import { ReportFilters } from "../components/report-filters"
 
@@ -59,7 +67,12 @@ export function ReportsPage() {
       partyId: "",
     })
 
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   const [loading, setLoading] =
+    useState(false)
+
+  const [hasGenerated, setHasGenerated] =
     useState(false)
 
   const [previewTransactions, setPreviewTransactions] =
@@ -132,6 +145,7 @@ export function ReportsPage() {
 
       setPreviewTransactions(transactions)
       setPreviewSummary(summary)
+      setHasGenerated(true)
 
       const party =
         filters.reportType === "agent" ||
@@ -178,6 +192,9 @@ export function ReportsPage() {
       link.remove()
 
       URL.revokeObjectURL(url)
+
+      // Close the sheet once the report has been generated & downloaded.
+      setSheetOpen(false)
     } catch (err) {
       console.error(
         "Failed to generate report:",
@@ -194,199 +211,277 @@ export function ReportsPage() {
     }
   }
 
+  const handleOpenNewReport = () => {
+    setError(null)
+    setSheetOpen(true)
+  }
+
   return (
     <AppShell title="Reports">
+      {/* Sticky page header */}
+      <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <PageHeader
+          title="Reports"
+          description="Financial statements & exports"
+          action={
+            <Button
+              size="icon"
+              className="size-10 rounded-full"
+              onClick={handleOpenNewReport}
+              aria-label="New report"
+            >
+              <Plus className="size-5" />
+            </Button>
+          }
+        />
+      </div>
+
       <div className="space-y-5">
-        {/* Header */}
-        <section>
-          <p className="text-sm text-muted-foreground">
-            Financial reports
-          </p>
+        {/* Primary CTA card — always visible, easy re-entry point */}
+        <button
+          type="button"
+          onClick={handleOpenNewReport}
+          className="flex w-full items-center gap-3 rounded-2xl border border-dashed bg-muted/30 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+        >
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Sparkles className="size-5" />
+          </div>
 
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-            Reports
-          </h2>
-        </section>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">
+              Generate a new report
+            </p>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-5">
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Transaction, agent, or agency statement
+            </p>
+          </div>
+
+          <Plus className="size-5 shrink-0 text-muted-foreground" />
+        </button>
+
+        {/* Last generated report */}
+        {hasGenerated ? (
+          <>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
+                Last generated
+              </h3>
+
+              <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                <div className="flex items-center gap-3 border-b p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <FileText className="size-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">
+                      {reportTitle}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(filters.dateFrom)} —{" "}
+                      {formatDate(filters.dateTo)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 divide-x">
+                  <div className="p-3 text-center">
+                    <p className="text-[11px] text-muted-foreground">
+                      Income
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        previewSummary.totalIncome,
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="p-3 text-center">
+                    <p className="text-[11px] text-muted-foreground">
+                      Expense
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        previewSummary.totalExpense,
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="p-3 text-center">
+                    <p className="text-[11px] text-muted-foreground">
+                      Net
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        previewSummary.netBalance,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Preview */}
+            <div className="overflow-hidden rounded-2xl border bg-card">
+              <div className="border-b px-4 py-3.5">
+                <p className="text-sm font-semibold">
+                  Statement Preview
+                </p>
+
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {previewTransactions.length}{" "}
+                  transaction
+                  {previewTransactions.length === 1
+                    ? ""
+                    : "s"}
+                </p>
+              </div>
+
+              {previewTransactions.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <FileText className="mx-auto size-8 text-muted-foreground" />
+
+                  <p className="mt-3 text-sm font-medium">
+                    No transactions found
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Try different filters.
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {previewTransactions.map(
+                    (transaction) => {
+                      const isIncome =
+                        transaction.type ===
+                        "income"
+
+                      return (
+                        <div
+                          key={transaction.id}
+                          className="flex items-center gap-3 px-4 py-3"
+                        >
+                          <div
+                            className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                              isIncome
+                                ? "bg-emerald-500/10 text-emerald-600"
+                                : "bg-destructive/10 text-destructive"
+                            }`}
+                          >
+                            {isIncome ? "+" : "-"}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {transaction.description ||
+                                (isIncome
+                                  ? "Income"
+                                  : "Expense")}
+                            </p>
+
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                              {formatDate(
+                                transaction.transaction_date,
+                              )}
+
+                              {" • "}
+
+                              {transaction.payment_method ||
+                                "Other"}
+
+                              {" • "}
+
+                              {transaction.party_type ===
+                              "agent"
+                                ? "Agent"
+                                : "Agency"}
+                            </p>
+                          </div>
+
+                          <p className="shrink-0 text-sm font-semibold">
+                            {isIncome ? "+" : "-"}
+                            {formatCurrency(
+                              Number(
+                                transaction.amount,
+                              ),
+                            )}
+                          </p>
+                        </div>
+                      )
+                    },
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Empty state — no report generated yet */
+          <div className="rounded-2xl border border-dashed p-8 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
+              <FileText className="size-5 text-muted-foreground" />
+            </div>
+
+            <h3 className="mt-4 font-medium">
+              No reports yet
+            </h3>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Tap "New Report" to generate your first
+              statement.
+            </p>
+
+            <Button
+              className="mt-4"
+              onClick={handleOpenNewReport}
+            >
+              <Plus className="mr-2 size-4" />
+              New Report
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* New Report Sheet */}
+      <Sheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      >
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto sm:max-w-md"
+        >
+          <SheetHeader>
+            <SheetTitle>New Report</SheetTitle>
+
+            <SheetDescription>
+              Configure filters and generate a statement.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="px-4 pb-6">
+            {error ? (
+              <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-sm text-destructive">
+                  {error}
+                </p>
+              </div>
+            ) : null}
+
             <ReportFilters
               filters={filters}
               onChange={setFilters}
               onGenerate={handleGenerate}
               loading={loading}
             />
-          </CardContent>
-        </Card>
-
-        {/* Error */}
-        {error ? (
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-destructive">
-                {error}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {/* Preview Summary */}
-        <Card>
-          <CardContent className="p-5">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
-                <FileText className="size-5" />
-              </div>
-
-              <div>
-                <p className="font-semibold">
-                  {reportTitle}
-                </p>
-
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(filters.dateFrom)} —{" "}
-                  {formatDate(filters.dateTo)}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">
-                  Income
-                </p>
-
-                <p className="mt-1 text-sm font-semibold">
-                  {formatCurrency(
-                    previewSummary.totalIncome,
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">
-                  Expense
-                </p>
-
-                <p className="mt-1 text-sm font-semibold">
-                  {formatCurrency(
-                    previewSummary.totalExpense,
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">
-                  Net
-                </p>
-
-                <p className="mt-1 text-sm font-semibold">
-                  {formatCurrency(
-                    previewSummary.netBalance,
-                  )}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Transaction Preview */}
-        <Card>
-          <CardContent className="p-0">
-            <div className="border-b px-5 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">
-                    Statement Preview
-                  </p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {previewTransactions.length}{" "}
-                    transaction
-                    {previewTransactions.length === 1
-                      ? ""
-                      : "s"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {previewTransactions.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <FileText className="mx-auto size-8 text-muted-foreground" />
-
-                <p className="mt-3 text-sm font-medium">
-                  No report data yet
-                </p>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Select your filters and generate
-                  the report.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {previewTransactions.map(
-                  (transaction) => {
-                    const isIncome =
-                      transaction.type ===
-                      "income"
-
-                    return (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center gap-3 px-5 py-3"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {transaction.description ||
-                              (
-                                isIncome
-                                  ? "Income"
-                                  : "Expense"
-                              )}
-                          </p>
-
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {formatDate(
-                              transaction.transaction_date,
-                            )}
-
-                            {" • "}
-
-                            {transaction.payment_method ||
-                              "Other"}
-
-                            {" • "}
-
-                            {transaction.party_type ===
-                            "agent"
-                              ? "Agent"
-                              : "Agency"}
-                          </p>
-                        </div>
-
-                        <p className="shrink-0 text-sm font-semibold">
-                          {isIncome
-                            ? "+"
-                            : "-"}
-
-                          {formatCurrency(
-                            Number(
-                              transaction.amount,
-                            ),
-                          )}
-                        </p>
-                      </div>
-                    )
-                  },
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </AppShell>
   )
 }

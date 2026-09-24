@@ -105,3 +105,49 @@ export async function getAgencyBalance(
     0,
   )
 }
+export interface AgencyStats {
+  balance: number
+  income: number
+  expense: number
+  transactionCount: number
+  lastTransactionDate: string | null
+}
+
+export async function getAgencyStats(
+  agencyId: string,
+): Promise<AgencyStats> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("type, amount, transaction_date")
+    .eq("agency_id", agencyId)
+    .eq("party_type", "agency")
+    .eq("is_active", true)
+    .order("transaction_date", { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  const rows = data ?? []
+
+  let income = 0
+  let expense = 0
+
+  for (const row of rows) {
+    const amount = Number(row.amount)
+
+    if (row.type === "income") {
+      income += amount
+    } else {
+      expense += amount
+    }
+  }
+
+  return {
+    balance: income - expense,
+    income,
+    expense,
+    transactionCount: rows.length,
+    lastTransactionDate: rows[0]?.transaction_date ?? null,
+  }
+}

@@ -1,38 +1,37 @@
 import { useEffect, useMemo, useState } from "react"
-import {
-  Pencil,
-  Plus,
-  RefreshCw,
-  Search,
-  UserRound,
-} from "lucide-react"
+import { Plus, RefreshCw, Search, UserRound, X } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useNavigate } from "react-router-dom"
+
 import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
+import { PartyCard } from "../../components/ui/party-card"
 import { AgencySheet } from "../components/agency-sheet"
 import {
   getAgencies,
-  getAgencyBalance,
+  getAgencyStats,
   setAgencyActive,
 } from "../services/agency-service"
+import type { AgencyStats } from "../services/agency-service"
 import type { Agency } from "../types/agency"
 
 export function AgenciesPage() {
   const [agencies, setAgencies] = useState<Agency[]>([])
   const [search, setSearch] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [selectedAgency, setSelectedAgency] =
-    useState<Agency | null>(null)
-    const [agencyBalances, setAgencyBalances] =
-  useState<Record<string, number>>({})
+  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null)
+  const [agencyStats, setAgencyStats] =
+    useState<Record<string, AgencyStats>>({})
+
   const navigate = useNavigate()
+
   const loadAgencies = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -45,27 +44,20 @@ export function AgenciesPage() {
 
       const data = await getAgencies()
 
-const balanceEntries = await Promise.all(
-  data.map(async (agency) => {
-    const balance = await getAgencyBalance(
-      agency.id,
-    )
+      const statsEntries = await Promise.all(
+        data.map(async (agency) => {
+          const stats = await getAgencyStats(agency.id)
+          return [agency.id, stats] as const
+        }),
+      )
 
-    return [agency.id, balance] as const
-  }),
-)
-
-setAgencies(data)
-setAgencyBalances(
-  Object.fromEntries(balanceEntries),
-)
+      setAgencies(data)
+      setAgencyStats(Object.fromEntries(statsEntries))
     } catch (err) {
       console.error("Failed to load agencies:", err)
 
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load agencies.",
+        err instanceof Error ? err.message : "Failed to load agencies.",
       )
     } finally {
       setLoading(false)
@@ -98,6 +90,18 @@ setAgencyBalances(
     setSheetOpen(true)
   }
 
+  const handleToggleSearch = () => {
+    setSearchOpen((current) => {
+      const next = !current
+
+      if (!next) {
+        setSearch("")
+      }
+
+      return next
+    })
+  }
+
   const handleEdit = (agency: Agency) => {
     setSelectedAgency(agency)
     setSheetOpen(true)
@@ -111,21 +115,15 @@ setAgencyBalances(
 
       if (exists) {
         return current.map((agency) =>
-          agency.id === savedAgency.id
-            ? savedAgency
-            : agency,
+          agency.id === savedAgency.id ? savedAgency : agency,
         )
       }
 
-      return [...current, savedAgency].sort(
-        (a, b) => a.sl - b.sl,
-      )
+      return [...current, savedAgency].sort((a, b) => a.sl - b.sl)
     })
   }
 
-  const handleToggleActive = async (
-    agency: Agency,
-  ) => {
+  const handleToggleActive = async (agency: Agency) => {
     try {
       setError(null)
 
@@ -136,16 +134,11 @@ setAgencyBalances(
 
       setAgencies((current) =>
         current.map((item) =>
-          item.id === updatedAgency.id
-            ? updatedAgency
-            : item,
+          item.id === updatedAgency.id ? updatedAgency : item,
         ),
       )
     } catch (err) {
-      console.error(
-        "Failed to update agency status:",
-        err,
-      )
+      console.error("Failed to update agency status:", err)
 
       setError(
         err instanceof Error
@@ -157,40 +150,60 @@ setAgencyBalances(
 
   return (
     <AppShell title="Agencies">
-      <div className="space-y-5">
+      {/* Sticky page header block — always stuck below AppHeader,
+          regardless of whether search is open */}
+      <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PageHeader
           title="Agencies"
           description="Manage your agencies"
           action={
-            <Button
-              size="icon"
-              className="size-10 rounded-full"
-              onClick={handleAdd}
-              aria-label="Add agency"
-            >
-              <Plus className="size-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={searchOpen ? "secondary" : "ghost"}
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleToggleSearch}
+                aria-label="Search agencies"
+                aria-expanded={searchOpen}
+              >
+                {searchOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Search className="size-5" />
+                )}
+              </Button>
+
+              <Button
+                size="icon"
+                className="size-10 rounded-full"
+                onClick={handleAdd}
+                aria-label="Add agency"
+              >
+                <Plus className="size-5" />
+              </Button>
+            </div>
           }
         />
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        {searchOpen ? (
+          <div className="relative mt-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-          <Input
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-            placeholder="Search agencies..."
-            className="h-11 pl-9 pr-3"
-          />
-        </div>
+            <Input
+              autoFocus
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search agencies..."
+              className="h-11 pl-9 pr-3"
+            />
+          </div>
+        ) : null}
+      </div>
 
+      <div className="space-y-5">
         {error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm text-destructive">
-              {error}
-            </p>
+            <p className="text-sm text-destructive">{error}</p>
 
             <Button
               variant="outline"
@@ -214,9 +227,7 @@ setAgencyBalances(
             {loading
               ? "Loading agencies..."
               : `${filteredAgencies.length} ${
-                  filteredAgencies.length === 1
-                    ? "agency"
-                    : "agencies"
+                  filteredAgencies.length === 1 ? "agency" : "agencies"
                 }`}
           </p>
 
@@ -252,9 +263,7 @@ setAgencyBalances(
             </div>
 
             <h3 className="mt-4 font-medium">
-              {search
-                ? "No agencies found"
-                : "No agencies yet"}
+              {search ? "No agencies found" : "No agencies yet"}
             </h3>
 
             <p className="mt-1 text-sm text-muted-foreground">
@@ -264,10 +273,7 @@ setAgencyBalances(
             </p>
 
             {!search ? (
-              <Button
-                className="mt-4"
-                onClick={handleAdd}
-              >
+              <Button className="mt-4" onClick={handleAdd}>
                 <Plus className="mr-2 size-4" />
                 Add Agency
               </Button>
@@ -275,119 +281,27 @@ setAgencyBalances(
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredAgencies.map((agency) => (
-              <div
-  key={agency.id}
-  className="cursor-pointer rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40"
-  onClick={() =>
-    navigate(`/app/agencies/${agency.id}`)
-  }
-><div className="mb-3 flex items-center justify-between">
-  <div>
-    <p className="text-xs text-muted-foreground">
-      Balance
-    </p>
+            {filteredAgencies.map((agency) => {
+              const stats = agencyStats[agency.id]
 
-    <p
-  className={`text-lg font-bold tracking-tight ${
-    (agencyBalances[agency.id] ?? 0) < 0
-      ? "text-destructive"
-      : "text-foreground"
-  }`}
->
-  {(agencyBalances[agency.id] ?? 0) < 0
-    ? "−"
-    : ""}
-
-  ৳
-  {Math.abs(
-    agencyBalances[agency.id] ?? 0,
-  ).toLocaleString("en-BD", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}
-</p>
-  </div>
-
-  <span className="text-xs text-muted-foreground">
-    Current
-  </span>
-</div>
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
-                    {String(agency.sl).padStart(3, "0")}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-semibold">
-                          {agency.name}
-                        </h3>
-
-                        {agency.phone ? (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {agency.phone}
-                          </p>
-                        ) : (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            No phone number
-                          </p>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 shrink-0"
-                        onClick={(event) => {
-  event.stopPropagation()
-  handleEdit(agency)
-}}
-                        aria-label={`Edit ${agency.name}`}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-  event.stopPropagation()
-  handleToggleActive(agency)
-}}
-                        className="flex items-center gap-2"
-                      >
-                        <span
-                          className={`size-2.5 rounded-full ${
-                            agency.is_active
-                              ? "bg-emerald-500"
-                              : "bg-muted-foreground"
-                          }`}
-                        />
-
-                        <span
-                          className={`text-xs font-medium ${
-                            agency.is_active
-                              ? "text-emerald-600"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {agency.is_active
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
-                      </button>
-
-                      <span className="text-xs text-muted-foreground">
-                        SL #{agency.sl}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              return (
+                <PartyCard
+                  key={agency.id}
+                  sl={agency.sl}
+                  name={agency.name}
+                  phone={agency.phone}
+                  isActive={agency.is_active}
+                  balance={stats?.balance ?? 0}
+                  income={stats?.income ?? 0}
+                  expense={stats?.expense ?? 0}
+                  transactionCount={stats?.transactionCount ?? 0}
+                  lastActivityDate={stats?.lastTransactionDate ?? null}
+                  onClick={() => navigate(`/app/agencies/${agency.id}`)}
+                  onEdit={() => handleEdit(agency)}
+                  onToggleActive={() => handleToggleActive(agency)}
+                />
+              )
+            })}
           </div>
         )}
 
