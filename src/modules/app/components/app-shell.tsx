@@ -2,16 +2,18 @@ import type { ReactNode } from "react"
 
 import { AppHeader } from "./app-header"
 import { BottomNav } from "./bottom-nav"
-
+import { useAppSync } from "@/lib/sync/use-app-sync"
 interface AppShellProps {
   children: ReactNode
   title?: string
 }
 
 export function AppShell({
+  
   children,
   title = "Dashboard",
 }: AppShellProps) {
+  useAppSync()
   return (
     <div className="min-h-svh bg-background">
       <AppHeader title={title} />

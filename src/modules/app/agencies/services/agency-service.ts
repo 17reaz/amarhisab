@@ -14,37 +14,28 @@ export async function getAgencies(): Promise<Agency[]> {
     .orderBy("sl")
     .toArray()
 
-  try {
-    const { data, error } = await supabase
-      .from("agencies")
-      .select(AGENCY_COLUMNS)
-      .order("sl", { ascending: true })
+  if (cachedAgencies.length > 0) {
+    return cachedAgencies
+  }
 
-    if (error) {
-      throw error
-    }
+  const { data, error } = await supabase
+    .from("agencies")
+    .select(AGENCY_COLUMNS)
+    .order("sl", { ascending: true })
 
-    const agencies = (data ?? []) as Agency[]
-
-    await db.agencies.clear()
-
-    if (agencies.length > 0) {
-      await db.agencies.bulkPut(agencies)
-    }
-
-    return agencies
-  } catch (error) {
-    if (cachedAgencies.length > 0) {
-      console.warn(
-        "Supabase unavailable. Using cached agencies.",
-        error,
-      )
-
-      return cachedAgencies
-    }
-
+  if (error) {
     throw error
   }
+
+  const agencies = (data ?? []) as Agency[]
+
+  await db.agencies.clear()
+
+  if (agencies.length > 0) {
+    await db.agencies.bulkPut(agencies)
+  }
+
+  return agencies
 }
 
 export async function createAgency(
@@ -65,7 +56,6 @@ export async function createAgency(
 
   const agency = data as Agency
 
-  // Supabase success → update local cache
   await db.agencies.put(agency)
 
   return agency
@@ -91,7 +81,6 @@ export async function updateAgency(
 
   const agency = data as Agency
 
-  // Supabase success → update local cache
   await db.agencies.put(agency)
 
   return agency
@@ -116,36 +105,9 @@ export async function setAgencyActive(
 
   const agency = data as Agency
 
-  // Supabase success → update local cache
   await db.agencies.put(agency)
 
   return agency
-}
-
-export async function getAgencyBalance(
-  agencyId: string,
-): Promise<number> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("type, amount")
-    .eq("agency_id", agencyId)
-    .eq("party_type", "agency")
-    .eq("is_active", true)
-
-  if (error) {
-    throw error
-  }
-
-  return (data ?? []).reduce(
-    (balance, transaction) => {
-      const amount = Number(transaction.amount)
-
-      return transaction.type === "income"
-        ? balance + amount
-        : balance - amount
-    },
-    0,
-  )
 }
 
 export interface AgencyStats {
@@ -159,6 +121,45 @@ export interface AgencyStats {
 export async function getAgencyStats(
   agencyId: string,
 ): Promise<AgencyStats> {
+  const cachedTransactions = await db.transactions
+    .filter(
+      (transaction) =>
+        transaction.agency_id === agencyId &&
+        transaction.party_type === "agency" &&
+        transaction.is_active,
+    )
+    .toArray()
+
+  if (cachedTransactions.length > 0) {
+    const rows = cachedTransactions.sort((a, b) =>
+      b.transaction_date.localeCompare(
+        a.transaction_date,
+      ),
+    )
+
+    let income = 0
+    let expense = 0
+
+    for (const row of rows) {
+      const amount = Number(row.amount)
+
+      if (row.type === "income") {
+        income += amount
+      } else {
+        expense += amount
+      }
+    }
+
+    return {
+      balance: income - expense,
+      income,
+      expense,
+      transactionCount: rows.length,
+      lastTransactionDate:
+        rows[0]?.transaction_date ?? null,
+    }
+  }
+
   const { data, error } = await supabase
     .from("transactions")
     .select("type, amount, transaction_date")

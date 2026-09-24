@@ -1,7 +1,7 @@
 import { Menu, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-
+import { ConnectionStatus } from "@/modules/app/components/ui/connection-status"
 import { AppMenuSheet } from "./app-menu-sheet"
 import { useNavigate } from "react-router-dom"
 interface AppHeaderProps {
@@ -29,7 +29,8 @@ export function AppHeader({ title }: AppHeaderProps) {
         <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-semibold">
           {title}
         </h1>
-
+          <div className="flex items-center gap-2">
+        <ConnectionStatus />
         <Button
           variant="ghost"
           size="icon"
@@ -39,6 +40,7 @@ export function AppHeader({ title }: AppHeaderProps) {
         >
           <UserRound className="size-5" />
         </Button>
+        </div>
       </div>
     </header>
   )

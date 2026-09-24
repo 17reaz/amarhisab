@@ -14,37 +14,28 @@ export async function getAgents(): Promise<Agent[]> {
     .orderBy("sl")
     .toArray()
 
-  try {
-    const { data, error } = await supabase
-      .from("agents")
-      .select(AGENT_COLUMNS)
-      .order("sl", { ascending: true })
+  if (cachedAgents.length > 0) {
+    return cachedAgents
+  }
 
-    if (error) {
-      throw error
-    }
+  const { data, error } = await supabase
+    .from("agents")
+    .select(AGENT_COLUMNS)
+    .order("sl", { ascending: true })
 
-    const agents = (data ?? []) as Agent[]
-
-    await db.agents.clear()
-
-    if (agents.length > 0) {
-      await db.agents.bulkPut(agents)
-    }
-
-    return agents
-  } catch (error) {
-    if (cachedAgents.length > 0) {
-      console.warn(
-        "Supabase unavailable. Using cached agents.",
-        error,
-      )
-
-      return cachedAgents
-    }
-
+  if (error) {
     throw error
   }
+
+  const agents = (data ?? []) as Agent[]
+
+  await db.agents.clear()
+
+  if (agents.length > 0) {
+    await db.agents.bulkPut(agents)
+  }
+
+  return agents
 }
 
 export async function createAgent(
@@ -65,7 +56,6 @@ export async function createAgent(
 
   const agent = data as Agent
 
-  // Supabase success → update local cache
   await db.agents.put(agent)
 
   return agent
@@ -91,7 +81,6 @@ export async function updateAgent(
 
   const agent = data as Agent
 
-  // Supabase success → update local cache
   await db.agents.put(agent)
 
   return agent
@@ -116,7 +105,6 @@ export async function setAgentActive(
 
   const agent = data as Agent
 
-  // Supabase success → update local cache
   await db.agents.put(agent)
 
   return agent
@@ -155,10 +143,48 @@ export interface AgentStats {
   transactionCount: number
   lastTransactionDate: string | null
 }
-
 export async function getAgentStats(
   agentId: string,
 ): Promise<AgentStats> {
+  const cachedTransactions = await db.transactions
+    .filter(
+      (transaction) =>
+        transaction.agent_id === agentId &&
+        transaction.party_type === "agent" &&
+        transaction.is_active,
+    )
+    .toArray()
+
+  if (cachedTransactions.length > 0) {
+    const rows = cachedTransactions.sort((a, b) =>
+      b.transaction_date.localeCompare(
+        a.transaction_date,
+      ),
+    )
+
+    let income = 0
+    let expense = 0
+
+    for (const row of rows) {
+      const amount = Number(row.amount)
+
+      if (row.type === "income") {
+        income += amount
+      } else {
+        expense += amount
+      }
+    }
+
+    return {
+      balance: income - expense,
+      income,
+      expense,
+      transactionCount: rows.length,
+      lastTransactionDate:
+        rows[0]?.transaction_date ?? null,
+    }
+  }
+
   const { data, error } = await supabase
     .from("transactions")
     .select("type, amount, transaction_date")

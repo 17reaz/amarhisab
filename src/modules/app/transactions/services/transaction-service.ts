@@ -24,63 +24,57 @@ const TRANSACTION_COLUMNS = `
   agency_id,
   created_at
 `
-
 export async function getTransactions(): Promise<Transaction[]> {
-  try {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select(TRANSACTION_COLUMNS)
-      .eq("is_active", true)
-      .order("transaction_date", {
-        ascending: false,
-      })
-      .order("created_at", {
-        ascending: false,
-      })
-
-    if (error) {
-      throw error
-    }
-
-    const transactions =
-      (data ?? []) as Transaction[]
-
-    await db.transactions.clear()
-
-    if (transactions.length > 0) {
-      await db.transactions.bulkPut(transactions)
-    }
-
-    return transactions
-  } catch (error) {
-    const cachedTransactions = (
-      await db.transactions.toArray()
-    )
-      .filter(
-        (transaction) => transaction.is_active,
-      )
-      .sort((a, b) => {
-        return (
-          b.transaction_date.localeCompare(
-            a.transaction_date,
-          ) ||
-          b.created_at.localeCompare(
-            a.created_at,
-          )
+  const cachedTransactions = (
+    await db.transactions.toArray()
+  )
+    .filter((transaction) => transaction.is_active)
+    .sort((a, b) => {
+      return (
+        b.transaction_date.localeCompare(
+          a.transaction_date,
+        ) ||
+        b.created_at.localeCompare(
+          a.created_at,
         )
-      })
-
-    if (cachedTransactions.length > 0) {
-      console.warn(
-        "Supabase unavailable. Using cached transactions.",
-        error,
       )
+    })
 
-      return cachedTransactions
-    }
+  // Dexie-তে data থাকলে প্রথমে cached data return হবে.
+  if (cachedTransactions.length > 0) {
+    return cachedTransactions
+  }
 
+  // First-ever load এবং Dexie empty হলে
+  // Supabase থেকে data আনতে হবে.
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(TRANSACTION_COLUMNS)
+    .eq("is_active", true)
+    .order("transaction_date", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: false,
+    })
+
+  if (error) {
     throw error
   }
+
+  const transactions =
+    (data ?? []) as Transaction[]
+
+  // Supabase fetch সফল হওয়ার পরেই cache update হবে.
+  await db.transactions.clear()
+
+  if (transactions.length > 0) {
+    await db.transactions.bulkPut(
+      transactions,
+    )
+  }
+
+  return transactions
 }
 
 export async function createTransaction(

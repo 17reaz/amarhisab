@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Plus, RefreshCw, Search, UserRound, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-
+import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -21,7 +21,7 @@ export function AgenciesPage() {
   const [agencies, setAgencies] = useState<Agency[]>([])
   const [search, setSearch] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,38 +32,52 @@ export function AgenciesPage() {
 
   const navigate = useNavigate()
 
-  const loadAgencies = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true)
-      } else {
-        setLoading(true)
-      }
+ const loadAgencies = async (isRefresh = false) => {
+  try {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      const cachedAgencies = await db.agencies
+        .filter((agency) => agency.is_active)
+        .toArray()
 
-      setError(null)
-
-      const data = await getAgencies()
-
-      const statsEntries = await Promise.all(
-        data.map(async (agency) => {
-          const stats = await getAgencyStats(agency.id)
-          return [agency.id, stats] as const
-        }),
-      )
-
-      setAgencies(data)
-      setAgencyStats(Object.fromEntries(statsEntries))
-    } catch (err) {
-      console.error("Failed to load agencies:", err)
-
-      setError(
-        err instanceof Error ? err.message : "Failed to load agencies.",
-      )
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(cachedAgencies.length === 0)
     }
+
+    setError(null)
+
+    const data = await getAgencies()
+
+    const statsEntries = await Promise.all(
+      data.map(async (agency) => {
+        const stats = await getAgencyStats(
+          agency.id,
+        )
+
+        return [agency.id, stats] as const
+      }),
+    )
+
+    setAgencies(data)
+    setAgencyStats(
+      Object.fromEntries(statsEntries),
+    )
+  } catch (err) {
+    console.error(
+      "Failed to load agencies:",
+      err,
+    )
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Failed to load agencies.",
+    )
+  } finally {
+    setLoading(false)
+    setRefreshing(false)
   }
+}
 
   useEffect(() => {
     loadAgencies()

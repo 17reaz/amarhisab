@@ -9,7 +9,7 @@ import {
   Search,
   X,
 } from "lucide-react"
-
+import { db } from "@/lib/db"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -147,7 +147,7 @@ export function TransactionsPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [filter, setFilter] = useState<FilterType>("all")
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 const [refreshing, setRefreshing] = useState(false)
 const [error, setError] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -157,23 +157,44 @@ const [error, setError] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailTransaction, setDetailTransaction] =
     useState<Transaction | null>(null)
-
- const loadData = async (isRefresh = false) => {
+const loadData = async (isRefresh = false) => {
   try {
     if (isRefresh) {
       setRefreshing(true)
     } else {
-      setLoading(true)
+      const cachedTransactions = await db.transactions
+        .filter((transaction) => transaction.is_active)
+        .toArray()
+
+      const cachedAgents = await db.agents
+        .filter((agent) => agent.is_active)
+        .toArray()
+
+      const cachedAgencies = await db.agencies
+        .filter((agency) => agency.is_active)
+        .toArray()
+
+      const hasCachedData =
+        cachedTransactions.length > 0 ||
+        cachedAgents.length > 0 ||
+        cachedAgencies.length > 0
+
+      // Skeleton শুধু তখনই দেখাবে যখন
+      // Dexie-তে একদম কোনো usable data নেই।
+      setLoading(!hasCachedData)
     }
 
     setError(null)
 
-    const [transactionData, agentData, agencyData] =
-      await Promise.all([
-        getTransactions(),
-        getAgents(),
-        getAgencies(),
-      ])
+    const [
+      transactionData,
+      agentData,
+      agencyData,
+    ] = await Promise.all([
+      getTransactions(),
+      getAgents(),
+      getAgencies(),
+    ])
 
     setTransactions(transactionData)
     setAgents(agentData)

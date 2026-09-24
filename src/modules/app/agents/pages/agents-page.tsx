@@ -6,7 +6,7 @@ import {
   UserRound,
   X,
 } from "lucide-react"
-
+import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
@@ -26,7 +26,7 @@ export function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [search, setSearch] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

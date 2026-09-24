@@ -1,5 +1,6 @@
-import { supabase } from "@/lib/supabase"
 import { db } from "@/lib/db"
+import { supabase } from "@/lib/supabase"
+import { setConnectionStatus } from "@/lib/sync/connection-status"
 
 import type { Agent } from "@/modules/app/agents/types/agent"
 import type { Agency } from "@/modules/app/agencies/types/agency"
@@ -42,6 +43,7 @@ export async function syncAgents(): Promise<Agent[]> {
 
   const agents = (data ?? []) as Agent[]
 
+  // Network fetch সফল হওয়ার পরেই cache replace হবে.
   await db.agents.clear()
 
   if (agents.length > 0) {
@@ -63,6 +65,7 @@ export async function syncAgencies(): Promise<Agency[]> {
 
   const agencies = (data ?? []) as Agency[]
 
+  // Network fetch সফল হওয়ার পরেই cache replace হবে.
   await db.agencies.clear()
 
   if (agencies.length > 0) {
@@ -76,20 +79,16 @@ export async function syncTransactions(): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from("transactions")
     .select(TRANSACTION_COLUMNS)
-    .order("transaction_date", {
-      ascending: false,
-    })
-    .order("created_at", {
-      ascending: false,
-    })
+    .order("transaction_date", { ascending: false })
+    .order("created_at", { ascending: false })
 
   if (error) {
     throw error
   }
 
-  const transactions =
-    (data ?? []) as Transaction[]
+  const transactions = (data ?? []) as Transaction[]
 
+  // Network fetch সফল হওয়ার পরেই cache replace হবে.
   await db.transactions.clear()
 
   if (transactions.length > 0) {
@@ -100,9 +99,24 @@ export async function syncTransactions(): Promise<Transaction[]> {
 }
 
 export async function syncAll(): Promise<void> {
-  await Promise.all([
-    syncAgents(),
-    syncAgencies(),
-    syncTransactions(),
-  ])
+  setConnectionStatus("syncing")
+
+  try {
+    await Promise.all([
+      syncAgents(),
+      syncAgencies(),
+      syncTransactions(),
+    ])
+
+    setConnectionStatus("connected")
+  } catch (error) {
+    setConnectionStatus("disconnected")
+
+    console.warn(
+      "Supabase sync failed. Keeping existing Dexie cache.",
+      error,
+    )
+
+    throw error
+  }
 }

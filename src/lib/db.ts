@@ -22,3 +22,9 @@ export class AmarHisabDatabase extends Dexie {
 }
 
 export const db = new AmarHisabDatabase()
+export async function replaceTable<T>(table: Table<T, string>, rows: T[]) {
+  await db.transaction("rw", table, async () => {
+    await table.clear()
+    if (rows.length > 0) await table.bulkPut(rows)
+  })
+}
