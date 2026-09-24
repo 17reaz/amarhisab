@@ -2,9 +2,9 @@ import { supabase } from "@/lib/supabase"
 
 import type {
   ReportFilters,
-  ReportTransaction,
-  ReportSummary,
   ReportParty,
+  ReportSummary,
+  ReportTransaction,
 } from "../types/report"
 
 const TRANSACTION_COLUMNS = `
@@ -26,12 +26,18 @@ export async function getReportTransactions(
     .from("transactions")
     .select(TRANSACTION_COLUMNS)
     .eq("is_active", true)
-    .gte("transaction_date", filters.dateFrom)
-    .lte("transaction_date", filters.dateTo)
+    .gte(
+      "transaction_date",
+      filters.dateFrom,
+    )
+    .lte(
+      "transaction_date",
+      filters.dateTo,
+    )
     .order("transaction_date", {
       ascending: true,
     })
-    .order("id", {
+    .order("created_at", {
       ascending: true,
     })
 
@@ -109,9 +115,11 @@ export function calculateReportSummary(
   return {
     totalIncome,
     totalExpense,
-    netBalance: totalIncome - totalExpense,
+    netBalance:
+      totalIncome - totalExpense,
   }
 }
+
 export async function getReportParty(
   filters: ReportFilters,
 ): Promise<ReportParty | null> {
@@ -122,7 +130,9 @@ export async function getReportParty(
   if (filters.partyType === "agent") {
     const { data, error } = await supabase
       .from("agents")
-      .select("id, sl, name, phone")
+      .select(
+        "id, sl, name, phone",
+      )
       .eq("id", filters.partyId)
       .single()
 
@@ -136,7 +146,9 @@ export async function getReportParty(
   if (filters.partyType === "agency") {
     const { data, error } = await supabase
       .from("agencies")
-      .select("id, sl, name, phone")
+      .select(
+        "id, sl, name, phone",
+      )
       .eq("id", filters.partyId)
       .single()
 
