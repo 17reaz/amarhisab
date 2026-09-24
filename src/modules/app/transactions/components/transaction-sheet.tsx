@@ -455,15 +455,17 @@ export function TransactionSheet({
                 </div>
               ) : (
                 <Select
-                  value={agentId}
-                  onValueChange={(value) =>
-                    setAgentId(value ?? "")
-                  }
-                  disabled={loading}
-                >
+  value={agentId}
+  onValueChange={(value) =>
+  setAgentId(value ?? "")
+}
+  disabled={loading}
+>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select agent" />
-                  </SelectTrigger>
+  <SelectValue placeholder="Select agent">
+    {selectedAgent?.name ?? "Select agent"}
+  </SelectValue>
+</SelectTrigger>
 
                   <SelectContent>
                     {agents
@@ -500,13 +502,15 @@ export function TransactionSheet({
                 <Select
                   value={agencyId}
                   onValueChange={(value) =>
-                    setAgencyId(value ?? "")
-                  }
+  setAgencyId(value ?? "")
+}
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select agency" />
-                  </SelectTrigger>
+  <SelectValue placeholder="Select agency">
+    {selectedAgency?.name ?? "Select agency"}
+  </SelectValue>
+</SelectTrigger>
 
                   <SelectContent>
                     {agencies
