@@ -3,12 +3,13 @@ import { Menu, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import { AppMenuSheet } from "./app-menu-sheet"
-
+import { useNavigate } from "react-router-dom"
 interface AppHeaderProps {
   title: string
 }
 
 export function AppHeader({ title }: AppHeaderProps) {
+  const navigate = useNavigate()
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between px-3">
@@ -34,6 +35,7 @@ export function AppHeader({ title }: AppHeaderProps) {
           size="icon"
           className="size-10 rounded-full"
           aria-label="Open profile"
+          onClick={() => navigate("/app/profile")}
         >
           <UserRound className="size-5" />
         </Button>
