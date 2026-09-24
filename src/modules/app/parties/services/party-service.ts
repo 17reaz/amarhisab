@@ -64,10 +64,9 @@ export async function getParties(): Promise<Party[]> {
     throw transactionsResult.error
   }
 
-  const latestTransactions = new Map<
-    string,
-    string
-  >()
+  const latestTransactions = new Map<string, string>()
+
+  const transactionCounts = new Map<string, number>()
 
   const transactions =
     (transactionsResult.data ??
@@ -85,6 +84,11 @@ export async function getParties(): Promise<Party[]> {
 
     const key =
       `${transaction.party_type}:${partyId}`
+
+    transactionCounts.set(
+      key,
+      (transactionCounts.get(key) ?? 0) + 1,
+    )
 
     if (latestTransactions.has(key)) {
       continue
@@ -113,6 +117,10 @@ export async function getParties(): Promise<Party[]> {
         latestTransactions.get(
           `agent:${agent.id}`,
         ) ?? null,
+      transactionCount:
+        transactionCounts.get(
+          `agent:${agent.id}`,
+        ) ?? 0,
     })),
 
     ...agencies.map((agency) => ({
@@ -125,6 +133,10 @@ export async function getParties(): Promise<Party[]> {
         latestTransactions.get(
           `agency:${agency.id}`,
         ) ?? null,
+      transactionCount:
+        transactionCounts.get(
+          `agency:${agency.id}`,
+        ) ?? 0,
     })),
   ]
 

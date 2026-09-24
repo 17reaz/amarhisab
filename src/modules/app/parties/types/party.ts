@@ -7,4 +7,5 @@ export interface Party {
   name: string
   phone: string | null
   lastTransactionDate: string | null
+  transactionCount: number
 }
