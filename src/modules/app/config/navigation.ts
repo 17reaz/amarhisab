@@ -1,7 +1,6 @@
 import {
   BarChart3,
   Building2,
-  CreditCard,
   Home,
   Receipt,
   Settings,
@@ -21,9 +20,9 @@ export const mainNavigation = [
     icon: Receipt,
   },
   {
-    label: "Accounts",
-    href: "/app/accounts",
-    icon: CreditCard,
+    label: "Parties",
+    href: "/app/parties",
+    icon: Users,
   },
 ] as const
 

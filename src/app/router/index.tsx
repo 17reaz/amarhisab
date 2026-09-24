@@ -11,7 +11,7 @@ import { LoginPage } from "@/modules/auth/pages/login-page"
 import { DashboardPage } from "@/modules/app/pages/dashboard-page"
 import { ProfilePage } from "@/modules/app/pages/profile-page"
 import { SettingsPage } from "@/modules/app/pages/settings-page"
-
+import { PartiesPage } from "@/modules/app/parties/pages/parties-page"
 import { AgentsPage } from "@/modules/app/agents/pages/agents-page"
 import { AgentProfilePage } from "@/modules/app/agents/pages/agent-profile-page"
 
@@ -48,7 +48,7 @@ function ProtectedRoutes() {
 
       <Route path="/app/transactions" element={<TransactionsPage />} />
       <Route path="/app/reports" element={<ReportsPage />} />
-
+      <Route path="/app/parties" element={<PartiesPage />}/>
       <Route path="/app/profile" element={<ProfilePage />} />
       <Route path="/app/settings" element={<SettingsPage />} />
 
