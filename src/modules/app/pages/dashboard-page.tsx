@@ -105,17 +105,7 @@ export function DashboardPage() {
   return (
     <AppShell title="Dashboard">
       <div className="space-y-5">
-        {/* Greeting */}
-        <section>
-          <p className="text-sm text-muted-foreground">
-            Good morning 👋
-          </p>
-
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-            Financial Overview
-          </h2>
-        </section>
-
+ 
         {/* Error */}
         {error ? (
           <Card>
@@ -134,52 +124,6 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         ) : null}
-
-        {/* Balance */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Total Balance
-                </p>
-
-                <p className="mt-2 text-3xl font-bold tracking-tight">
-                  {loading
-                    ? "Loading..."
-                    : formatCurrency(
-                        summary?.balance ?? 0,
-                      )}
-                </p>
-              </div>
-
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted">
-                <Wallet className="size-5" />
-              </div>
-            </div>
-
-            {!loading ? (
-              <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>
-                  Income{" "}
-                  {formatCurrency(
-                    summary?.income ?? 0,
-                  )}
-                </span>
-
-                <span>•</span>
-
-                <span>
-                  Expense{" "}
-                  {formatCurrency(
-                    summary?.expense ?? 0,
-                  )}
-                </span>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
         {/* Income / Expense */}
         <div className="grid grid-cols-2 gap-3">
           <Card>
