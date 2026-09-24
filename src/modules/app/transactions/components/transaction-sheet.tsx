@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sheet"
 
 import {
+  archiveTransaction,
   createTransaction,
   updateTransaction,
 } from "../services/transaction-service"
@@ -122,7 +123,39 @@ export function TransactionSheet({
       setAgentId("")
     }
   }, [partyType])
+const handleDelete = async () => {
+  if (!transaction || loading) return
 
+  const confirmed = window.confirm(
+    "Delete this transaction?",
+  )
+
+  if (!confirmed) return
+
+  try {
+    setLoading(true)
+    setError(null)
+
+    const archived =
+      await archiveTransaction(transaction.id)
+
+    onSaved(archived)
+    onOpenChange(false)
+  } catch (err) {
+    console.error(
+      "Failed to delete transaction:",
+      err,
+    )
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Failed to delete transaction.",
+    )
+  } finally {
+    setLoading(false)
+  }
+}
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
@@ -507,6 +540,19 @@ export function TransactionSheet({
                 ? "Update Transaction"
                 : "Save Transaction"}
           </Button>
+          {isEdit ? (
+  <Button
+    type="button"
+    variant="destructive"
+    className="w-full"
+    onClick={() => void handleDelete()}
+    disabled={loading}
+  >
+    {loading
+      ? "Deleting..."
+      : "Delete Transaction"}
+  </Button>
+) : null}
         </form>
       </SheetContent>
     </Sheet>

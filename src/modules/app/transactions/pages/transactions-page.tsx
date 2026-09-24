@@ -200,24 +200,33 @@ export function TransactionsPage() {
   }
 
   const handleSaved = (
-    transaction: Transaction,
-  ) => {
-    setTransactions((current) => {
-      const exists = current.some(
-        (item) => item.id === transaction.id,
-      )
-
-      if (exists) {
-        return current.map((item) =>
-          item.id === transaction.id
-            ? transaction
-            : item,
-        )
-      }
-
-      return [transaction, ...current]
-    })
+  transaction: Transaction,
+) => {
+  if (!transaction.is_active) {
+    setTransactions((current) =>
+      current.filter(
+        (item) => item.id !== transaction.id,
+      ),
+    )
+    return
   }
+
+  setTransactions((current) => {
+    const exists = current.some(
+      (item) => item.id === transaction.id,
+    )
+
+    if (exists) {
+      return current.map((item) =>
+        item.id === transaction.id
+          ? transaction
+          : item,
+      )
+    }
+
+    return [transaction, ...current]
+  })
+}
 
   const formatAmount = (
     amount: number,
