@@ -24,6 +24,7 @@ import {
   createTransaction,
   updateTransaction,
 } from "../services/transaction-service"
+
 import type {
   CreateTransactionInput,
   PaymentMethod,
@@ -42,6 +43,11 @@ interface TransactionSheetProps {
   agents: Agent[]
   agencies: Agency[]
   onSaved: (transaction: Transaction) => void
+
+  // Optional locked party.
+  // Used when opening the sheet from an Agent/Agency profile.
+  lockedPartyType?: PartyType
+  lockedPartyId?: string
 }
 
 export function TransactionSheet({
@@ -51,8 +57,13 @@ export function TransactionSheet({
   agents,
   agencies,
   onSaved,
+  lockedPartyType,
+  lockedPartyId,
 }: TransactionSheetProps) {
   const isEdit = Boolean(transaction)
+
+  const isPartyLocked =
+    Boolean(lockedPartyType && lockedPartyId) && !isEdit
 
   const [type, setType] =
     useState<TransactionType>("income")
@@ -94,11 +105,24 @@ export function TransactionSheet({
     )
 
     setPartyType(
-      transaction?.party_type ?? "agent",
+      transaction?.party_type ??
+        lockedPartyType ??
+        "agent",
     )
 
-    setAgentId(transaction?.agent_id ?? "")
-    setAgencyId(transaction?.agency_id ?? "")
+    setAgentId(
+      transaction?.agent_id ??
+        (lockedPartyType === "agent"
+          ? lockedPartyId ?? ""
+          : ""),
+    )
+
+    setAgencyId(
+      transaction?.agency_id ??
+        (lockedPartyType === "agency"
+          ? lockedPartyId ?? ""
+          : ""),
+    )
 
     setDescription(
       transaction?.description ?? "",
@@ -114,48 +138,57 @@ export function TransactionSheet({
     )
 
     setError(null)
-  }, [open, transaction])
+  }, [
+    open,
+    transaction,
+    lockedPartyType,
+    lockedPartyId,
+  ])
 
   useEffect(() => {
+    if (isPartyLocked) return
+
     if (partyType === "agent") {
       setAgencyId("")
     } else {
       setAgentId("")
     }
-  }, [partyType])
-const handleDelete = async () => {
-  if (!transaction || loading) return
+  }, [partyType, isPartyLocked])
 
-  const confirmed = window.confirm(
-    "Delete this transaction?",
-  )
+  const handleDelete = async () => {
+    if (!transaction || loading) return
 
-  if (!confirmed) return
-
-  try {
-    setLoading(true)
-    setError(null)
-
-    const archived =
-      await archiveTransaction(transaction.id)
-
-    onSaved(archived)
-    onOpenChange(false)
-  } catch (err) {
-    console.error(
-      "Failed to delete transaction:",
-      err,
+    const confirmed = window.confirm(
+      "Delete this transaction?",
     )
 
-    setError(
-      err instanceof Error
-        ? err.message
-        : "Failed to delete transaction.",
-    )
-  } finally {
-    setLoading(false)
+    if (!confirmed) return
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const archived =
+        await archiveTransaction(transaction.id)
+
+      onSaved(archived)
+      onOpenChange(false)
+    } catch (err) {
+      console.error(
+        "Failed to delete transaction:",
+        err,
+      )
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to delete transaction.",
+      )
+    } finally {
+      setLoading(false)
+    }
   }
-}
+
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
@@ -229,6 +262,14 @@ const handleDelete = async () => {
       setLoading(false)
     }
   }
+
+  const selectedAgent = agents.find(
+    (agent) => agent.id === agentId,
+  )
+
+  const selectedAgency = agencies.find(
+    (agency) => agency.id === agencyId,
+  )
 
   return (
     <Sheet
@@ -362,29 +403,43 @@ const handleDelete = async () => {
           <div className="space-y-2">
             <Label>Party</Label>
 
-            <Select
-              value={partyType}
-              onValueChange={(value) =>
-                setPartyType(
-                  value as PartyType,
-                )
-              }
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+            {isPartyLocked ? (
+              <div className="flex h-10 items-center justify-between rounded-md border bg-muted/50 px-3 text-sm">
+                <span>
+                  {lockedPartyType === "agent"
+                    ? "Agent"
+                    : "Agency"}
+                </span>
 
-              <SelectContent>
-                <SelectItem value="agent">
-                  Agent
-                </SelectItem>
+                <span className="text-muted-foreground">
+                  Locked
+                </span>
+              </div>
+            ) : (
+              <Select
+                value={partyType}
+                onValueChange={(value) =>
+                  setPartyType(
+                    value as PartyType,
+                  )
+                }
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
 
-                <SelectItem value="agency">
-                  Agency
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  <SelectItem value="agent">
+                    Agent
+                  </SelectItem>
+
+                  <SelectItem value="agency">
+                    Agency
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Agent */}
@@ -393,40 +448,40 @@ const handleDelete = async () => {
             <div className="space-y-2">
               <Label>Agent</Label>
 
-              <Select
-  value={agentId}
-  onValueChange={(value) => setAgentId(value ?? "")}
-  disabled={loading}
->
-  <SelectTrigger>
-    <SelectValue placeholder="Select agent">
-      {agentId
-        ? (() => {
-            const agent = agents.find(
-              (item) => item.id === agentId,
-            )
+              {isPartyLocked ? (
+                <div className="flex h-10 items-center rounded-md border bg-muted/50 px-3 text-sm">
+                  {selectedAgent?.name ??
+                    "Selected agent"}
+                </div>
+              ) : (
+                <Select
+                  value={agentId}
+                  onValueChange={(value) =>
+                    setAgentId(value ?? "")
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select agent" />
+                  </SelectTrigger>
 
-            return agent
-              ? `${agent.name}`
-              : "Select agent"
-          })()
-        : "Select agent"}
-    </SelectValue>
-  </SelectTrigger>
-
-  <SelectContent>
-    {agents
-      .filter((agent) => agent.is_active)
-      .map((agent) => (
-        <SelectItem
-          key={agent.id}
-          value={agent.id}
-        >
-          {agent.name}
-        </SelectItem>
-      ))}
-  </SelectContent>
-</Select>
+                  <SelectContent>
+                    {agents
+                      .filter(
+                        (agent) =>
+                          agent.is_active,
+                      )
+                      .map((agent) => (
+                        <SelectItem
+                          key={agent.id}
+                          value={agent.id}
+                        >
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           ) : null}
 
@@ -436,40 +491,40 @@ const handleDelete = async () => {
             <div className="space-y-2">
               <Label>Agency</Label>
 
-              <Select
-  value={agencyId}
-  onValueChange={(value) => setAgencyId(value ?? "")}
-  disabled={loading}
->
-  <SelectTrigger>
-    <SelectValue placeholder="Select agency">
-      {agencyId
-        ? (() => {
-            const agency = agencies.find(
-              (item) => item.id === agencyId,
-            )
+              {isPartyLocked ? (
+                <div className="flex h-10 items-center rounded-md border bg-muted/50 px-3 text-sm">
+                  {selectedAgency?.name ??
+                    "Selected agency"}
+                </div>
+              ) : (
+                <Select
+                  value={agencyId}
+                  onValueChange={(value) =>
+                    setAgencyId(value ?? "")
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select agency" />
+                  </SelectTrigger>
 
-            return agency
-              ? `${agency.name}`
-              : "Select agency"
-          })()
-        : "Select agency"}
-    </SelectValue>
-  </SelectTrigger>
-
-  <SelectContent>
-    {agencies
-      .filter((agency) => agency.is_active)
-      .map((agency) => (
-        <SelectItem
-          key={agency.id}
-          value={agency.id}
-        >
-          {agency.name}
-        </SelectItem>
-      ))}
-  </SelectContent>
-</Select>
+                  <SelectContent>
+                    {agencies
+                      .filter(
+                        (agency) =>
+                          agency.is_active,
+                      )
+                      .map((agency) => (
+                        <SelectItem
+                          key={agency.id}
+                          value={agency.id}
+                        >
+                          {agency.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           ) : null}
 
@@ -550,19 +605,20 @@ const handleDelete = async () => {
                 ? "Update Transaction"
                 : "Save Transaction"}
           </Button>
+
           {isEdit ? (
-  <Button
-    type="button"
-    variant="destructive"
-    className="w-full"
-    onClick={() => void handleDelete()}
-    disabled={loading}
-  >
-    {loading
-      ? "Deleting..."
-      : "Delete Transaction"}
-  </Button>
-) : null}
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              onClick={() => void handleDelete()}
+              disabled={loading}
+            >
+              {loading
+                ? "Deleting..."
+                : "Delete Transaction"}
+            </Button>
+          ) : null}
         </form>
       </SheetContent>
     </Sheet>
