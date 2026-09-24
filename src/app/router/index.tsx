@@ -8,10 +8,14 @@ import {
 import { useAuth } from "@/modules/auth/hooks/use-auth"
 import { LoginPage } from "@/modules/auth/pages/login-page"
 
+import { AppShell } from "@/modules/app/components/app-shell"
+
 import { DashboardPage } from "@/modules/app/pages/dashboard-page"
 import { ProfilePage } from "@/modules/app/pages/profile-page"
 import { SettingsPage } from "@/modules/app/pages/settings-page"
+
 import { PartiesPage } from "@/modules/app/parties/pages/parties-page"
+
 import { AgentsPage } from "@/modules/app/agents/pages/agents-page"
 import { AgentProfilePage } from "@/modules/app/agents/pages/agent-profile-page"
 
@@ -27,7 +31,9 @@ function ProtectedRoutes() {
   if (loading) {
     return (
       <main className="flex min-h-svh items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <div className="text-sm text-muted-foreground">
+          Loading...
+        </div>
       </main>
     )
   }
@@ -38,21 +44,62 @@ function ProtectedRoutes() {
 
   return (
     <Routes>
-      <Route path="/app" element={<DashboardPage />} />
+      <Route element={<AppShell />}>
+        <Route
+          path="/app"
+          element={<DashboardPage />}
+        />
 
-      <Route path="/app/agents" element={<AgentsPage />} />
-      <Route path="/app/agents/:id" element={<AgentProfilePage />} />
+        <Route
+          path="/app/agents"
+          element={<AgentsPage />}
+        />
 
-      <Route path="/app/agencies" element={<AgenciesPage />} />
-      <Route path="/app/agencies/:id" element={<AgencyProfilePage />} />
+        <Route
+          path="/app/agents/:id"
+          element={<AgentProfilePage />}
+        />
 
-      <Route path="/app/transactions" element={<TransactionsPage />} />
-      <Route path="/app/reports" element={<ReportsPage />} />
-      <Route path="/app/parties" element={<PartiesPage />}/>
-      <Route path="/app/profile" element={<ProfilePage />} />
-      <Route path="/app/settings" element={<SettingsPage />} />
+        <Route
+          path="/app/agencies"
+          element={<AgenciesPage />}
+        />
 
-      <Route path="*" element={<Navigate to="/app" replace />} />
+        <Route
+          path="/app/agencies/:id"
+          element={<AgencyProfilePage />}
+        />
+
+        <Route
+          path="/app/transactions"
+          element={<TransactionsPage />}
+        />
+
+        <Route
+          path="/app/reports"
+          element={<ReportsPage />}
+        />
+
+        <Route
+          path="/app/parties"
+          element={<PartiesPage />}
+        />
+
+        <Route
+          path="/app/profile"
+          element={<ProfilePage />}
+        />
+
+        <Route
+          path="/app/settings"
+          element={<SettingsPage />}
+        />
+      </Route>
+
+      <Route
+        path="*"
+        element={<Navigate to="/app" replace />}
+      />
     </Routes>
   )
 }
@@ -61,8 +108,15 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/*" element={<ProtectedRoutes />} />
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/*"
+          element={<ProtectedRoutes />}
+        />
       </Routes>
     </BrowserRouter>
   )

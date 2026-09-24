@@ -25,7 +25,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { AppShell } from "../components/app-shell"
 import { QuickTransactionDialog } from "../transactions/components/quick-transaction-dialog"
 import type { Agent } from "../agents/types/agent"
 import type { Agency } from "../agencies/types/agency"
@@ -142,7 +141,7 @@ export function DashboardPage() {
   const balance = income - expense
 
   return (
-    <AppShell title="Dashboard">
+    <>
       <div className="space-y-6">
         {/* Error */}
         {error ? (
@@ -481,6 +480,6 @@ export function DashboardPage() {
         agencies={agencies}
         onSaved={handleQuickTransactionSaved}
       />
-    </AppShell>
+    </>
   )
 }

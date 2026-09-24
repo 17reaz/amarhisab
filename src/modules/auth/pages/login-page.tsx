@@ -1,5 +1,13 @@
 import { Navigate } from "react-router-dom"
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
 import { LoginForm } from "../components/login-form"
 import { useAuth } from "../hooks/use-auth"
 
@@ -8,10 +16,10 @@ export function LoginPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">
+      <main className="flex min-h-svh items-center justify-center bg-muted/30 px-5">
+        <p className="text-sm text-muted-foreground">
           Loading...
-        </div>
+        </p>
       </main>
     )
   }
@@ -21,26 +29,36 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-svh bg-background">
-      <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-5 py-8 sm:px-6">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-sm">
-            AH
-          </div>
+    <main className="flex min-h-svh items-center justify-center bg-muted/30 px-5 py-8 sm:px-6">
+      <div className="w-full max-w-sm">
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="space-y-4 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
+              AH
+            </div>
 
-          <h1 className="text-2xl font-bold tracking-tight">
-            AmarHisab
-          </h1>
+            <div className="space-y-1">
+              <CardTitle className="text-2xl tracking-tight">
+                AmarHisab
+              </CardTitle>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Travel agency finance
-          </p>
-        </div>
+              <CardDescription>
+                Travel agency finance
+              </CardDescription>
+            </div>
+          </CardHeader>
 
-        <LoginForm />
+          <CardContent>
+            <LoginForm />
+
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              Secure access to your financial workspace
+            </p>
+          </CardContent>
+        </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Secure access to your financial workspace
+          © {new Date().getFullYear()} AmarHisab
         </p>
       </div>
     </main>

@@ -11,7 +11,6 @@ export default defineConfig({
 
     VitePWA({
       registerType: "autoUpdate",
-
       manifest: {
         name: "AmarHisab",
         short_name: "AmarHisab",
@@ -45,6 +44,8 @@ export default defineConfig({
 
       workbox: {
         cleanupOutdatedCaches: true,
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+
       },
 
       devOptions: {

@@ -6,19 +6,22 @@ import {
   UserRound,
   X,
 } from "lucide-react"
+
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
-import { AppShell } from "../../components/app-shell"
+
 import { PageHeader } from "../../components/page-header"
 import { PartyCard } from "../../components/ui/party-card"
 import { AgentSheet } from "../components/agent-sheet"
+
 import {
   getAgentStats,
   getAgents,
   setAgentActive,
 } from "../services/agent-service"
+
 import type { AgentStats } from "../services/agent-service"
 import type { Agent } from "../types/agent"
 
@@ -44,7 +47,11 @@ export function AgentsPage() {
       if (isRefresh) {
         setRefreshing(true)
       } else {
-        setLoading(true)
+        const cachedAgents = await db.agents
+          .filter((agent) => agent.is_active)
+          .toArray()
+
+        setLoading(cachedAgents.length === 0)
       }
 
       setError(null)
@@ -54,6 +61,7 @@ export function AgentsPage() {
       const statsEntries = await Promise.all(
         data.map(async (agent) => {
           const stats = await getAgentStats(agent.id)
+
           return [agent.id, stats] as const
         }),
       )
@@ -61,7 +69,10 @@ export function AgentsPage() {
       setAgents(data)
       setAgentStats(Object.fromEntries(statsEntries))
     } catch (err) {
-      console.error("Failed to load agents:", err)
+      console.error(
+        "Failed to load agents:",
+        err,
+      )
 
       setError(
         err instanceof Error
@@ -75,7 +86,7 @@ export function AgentsPage() {
   }
 
   useEffect(() => {
-    loadAgents()
+    void loadAgents()
   }, [])
 
   const filteredAgents = useMemo(() => {
@@ -169,9 +180,7 @@ export function AgentsPage() {
   }
 
   return (
-    <AppShell title="Agents">
-      {/* Sticky page header block — always stuck below AppHeader,
-          regardless of whether search is open */}
+    <>
       <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PageHeader
           title="Agents"
@@ -179,7 +188,9 @@ export function AgentsPage() {
           action={
             <div className="flex items-center gap-2">
               <Button
-                variant={searchOpen ? "secondary" : "ghost"}
+                variant={
+                  searchOpen ? "secondary" : "ghost"
+                }
                 size="icon"
                 className="size-10 rounded-full"
                 onClick={handleToggleSearch}
@@ -233,7 +244,7 @@ export function AgentsPage() {
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={() => loadAgents(true)}
+              onClick={() => void loadAgents(true)}
               disabled={refreshing}
             >
               <RefreshCw
@@ -261,7 +272,7 @@ export function AgentsPage() {
             variant="ghost"
             size="sm"
             className="h-9 px-2"
-            onClick={() => loadAgents(true)}
+            onClick={() => void loadAgents(true)}
             disabled={refreshing}
           >
             <RefreshCw
@@ -332,11 +343,15 @@ export function AgentsPage() {
                     stats?.lastTransactionDate ?? null
                   }
                   onClick={() =>
-                    navigate(`/app/agents/${agent.id}`)
+                    navigate(
+                      `/app/agents/${agent.id}`,
+                    )
                   }
-                  onEdit={() => handleEdit(agent)}
+                  onEdit={() =>
+                    handleEdit(agent)
+                  }
                   onToggleActive={() =>
-                    handleToggleActive(agent)
+                    void handleToggleActive(agent)
                   }
                 />
               )
@@ -351,6 +366,6 @@ export function AgentsPage() {
           onSaved={handleSaved}
         />
       </div>
-    </AppShell>
+    </>
   )
 }

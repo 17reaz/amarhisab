@@ -26,7 +26,6 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 import { getAgents } from "../../agents/services/agent-service"
 import type { Agent } from "../../agents/types/agent"
@@ -343,7 +342,7 @@ useEffect(() => {
   }
 
   return (
-    <AppShell title="Transactions">
+    <>
       {/* Sticky page header — always stuck below AppHeader.
           Filters live inside this sticky block too:
           - search closed  -> full filter tabs shown under the title
@@ -598,6 +597,6 @@ useEffect(() => {
         agencies={agencies}
         onSaved={handleSaved}
       />
-    </AppShell>
+    </>
   )
 }

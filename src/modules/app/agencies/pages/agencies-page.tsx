@@ -5,7 +5,6 @@ import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 import { PartyCard } from "../../components/ui/party-card"
 import { AgencySheet } from "../components/agency-sheet"
@@ -163,7 +162,7 @@ export function AgenciesPage() {
   }
 
   return (
-    <AppShell title="Agencies">
+    <>
       {/* Sticky page header block — always stuck below AppHeader,
           regardless of whether search is open */}
       <div className="sticky top-14 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -326,6 +325,6 @@ export function AgenciesPage() {
           onSaved={handleSaved}
         />
       </div>
-    </AppShell>
+    </>
   )
 }
