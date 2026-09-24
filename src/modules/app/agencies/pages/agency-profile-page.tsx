@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
+  ChevronUp,
   FileText,
   Phone,
   RefreshCw,
 } from "lucide-react"
+import { PartyStatementDownload } from "../../reports/components/party-statement-download"
 import {
   useNavigate,
   useParams,
@@ -69,6 +71,9 @@ export function AgencyProfilePage() {
   const [dateTo, setDateTo] =
     useState("")
 
+  const [reportOpen, setReportOpen] =
+    useState(false)
+
   async function load() {
     if (!id) return
 
@@ -109,7 +114,7 @@ export function AgencyProfilePage() {
   }
 
   useEffect(() => {
-    load()
+    void load()
   }, [id])
 
   const filteredTransactions =
@@ -185,31 +190,263 @@ export function AgencyProfilePage() {
     <AppShell title="Agency Statement">
       <div className="space-y-5">
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-10 rounded-full"
-            onClick={() =>
-              navigate("/app/agencies")
-            }
-            aria-label="Back to agencies"
-          >
-            <ArrowLeft className="size-5" />
-          </Button>
+        {/* Header */}
 
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">
-              Agency
-            </p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 shrink-0 rounded-full"
+              onClick={() =>
+                navigate("/app/agencies")
+              }
+              aria-label="Back to agencies"
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
 
-            <h2 className="truncate text-xl font-semibold tracking-tight">
-              {loading
-                ? "Loading..."
-                : agency?.name ?? "Agency"}
-            </h2>
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">
+                Agency
+              </p>
+
+              <h2 className="truncate text-xl font-semibold tracking-tight">
+                {loading
+                  ? "Loading..."
+                  : agency?.name ?? "Agency"}
+              </h2>
+            </div>
           </div>
+
+          {/* Report Action */}
+
+          <Button
+            variant={
+              reportOpen
+                ? "secondary"
+                : "ghost"
+            }
+            size="icon"
+            className="size-10 shrink-0 rounded-full"
+            onClick={() =>
+              setReportOpen(
+                (current) => !current,
+              )
+            }
+            aria-label="Generate statement"
+            aria-expanded={reportOpen}
+          >
+            <FileText className="size-5" />
+          </Button>
         </div>
+
+        {/* Report Options */}
+
+        {reportOpen ? (
+          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold">
+                  Generate Statement
+                </p>
+
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Export this agency statement as PDF
+                </p>
+              </div>
+
+              <ChevronUp className="size-4 text-muted-foreground" />
+            </div>
+
+            <div className="space-y-4 p-4">
+
+              {/* Date */}
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    From
+                  </p>
+
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    max={
+                      dateTo || undefined
+                    }
+                    onChange={(event) =>
+                      setDateFrom(
+                        event.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    To
+                  </p>
+
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    min={
+                      dateFrom || undefined
+                    }
+                    onChange={(event) =>
+                      setDateTo(
+                        event.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+              </div>
+
+              {/* Transaction Type */}
+
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Transaction Type
+                </p>
+
+                <Select
+                  value={typeFilter}
+                  onValueChange={(value) =>
+                    setTypeFilter(
+                      (value ?? "all") as
+                        | "all"
+                        | "income"
+                        | "expense",
+                    )
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Transaction type" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="all">
+                      All Transactions
+                    </SelectItem>
+
+                    <SelectItem value="income">
+                      Income
+                    </SelectItem>
+
+                    <SelectItem value="expense">
+                      Expense
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Summary */}
+
+              <div className="rounded-xl bg-muted/50 p-3">
+                <div className="grid grid-cols-3 gap-3 text-center">
+
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Income
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        summary.income,
+                      )}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Expense
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        summary.expense,
+                      )}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Net
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold">
+                      {formatCurrency(
+                        summary.net,
+                      )}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Generate PDF */}
+
+              <PartyStatementDownload
+                partyType="agency"
+                party={{
+                  sl: agency.sl,
+                  name: agency.name,
+                  phone: agency.phone,
+                }}
+                transactions={filteredTransactions.map(
+                  (transaction) => ({
+                    id: transaction.id,
+                    transaction_date:
+                      transaction.transaction_date,
+                    type: transaction.type,
+                    amount: Number(
+                      transaction.amount,
+                    ),
+                    description:
+                      transaction.description,
+                    payment_method:
+                      transaction.payment_method,
+                    party_type: "agency",
+                    agent_id:
+                      transaction.agent_id,
+                    agency_id:
+                      transaction.agency_id,
+                  }),
+                )}
+                summary={{
+                  totalIncome:
+                    summary.income,
+                  totalExpense:
+                    summary.expense,
+                  netBalance:
+                    summary.net,
+                }}
+                dateFrom={
+                  dateFrom ||
+                  filteredTransactions.at(-1)
+                    ?.transaction_date ||
+                  new Date()
+                    .toISOString()
+                    .slice(0, 10)
+                }
+                dateTo={
+                  dateTo ||
+                  filteredTransactions[0]
+                    ?.transaction_date ||
+                  new Date()
+                    .toISOString()
+                    .slice(0, 10)
+                }
+              />
+
+            </div>
+          </div>
+        ) : null}
+
+        {/* Error */}
 
         {error ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
@@ -221,7 +458,7 @@ export function AgencyProfilePage() {
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={load}
+              onClick={() => void load()}
               disabled={loading}
             >
               <RefreshCw className="mr-2 size-4" />
@@ -232,6 +469,8 @@ export function AgencyProfilePage() {
 
         {agency ? (
           <>
+            {/* Agency Info */}
+
             <div className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="flex items-start gap-3">
 
@@ -281,6 +520,8 @@ export function AgencyProfilePage() {
               </div>
             </div>
 
+            {/* Summary */}
+
             <div className="grid grid-cols-3 gap-2">
 
               <div className="rounded-xl border p-3">
@@ -321,79 +562,7 @@ export function AgencyProfilePage() {
 
             </div>
 
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  max={
-                    dateTo || undefined
-                  }
-                  onChange={(event) =>
-                    setDateFrom(
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <Input
-                  type="date"
-                  value={dateTo}
-                  min={
-                    dateFrom || undefined
-                  }
-                  onChange={(event) =>
-                    setDateTo(
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <Select
-                  value={typeFilter}
-                  onValueChange={(value) =>
-                    setTypeFilter(
-                      (value ?? "all") as
-                        | "all"
-                        | "income"
-                        | "expense",
-                    )
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Transaction type" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value="all">
-                      All Transactions
-                    </SelectItem>
-
-                    <SelectItem value="income">
-                      Income
-                    </SelectItem>
-
-                    <SelectItem value="expense">
-                      Expense
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    navigate(
-                      `/app/reports?reportType=agency&partyId=${agency.id}`,
-                    )
-                  }
-                >
-                  <FileText className="mr-2 size-4" />
-                  Full PDF Report
-                </Button>
-
-              </div>
-            </div>
+            {/* Statement */}
 
             <div className="overflow-hidden rounded-2xl border bg-card">
 

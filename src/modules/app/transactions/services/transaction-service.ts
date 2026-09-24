@@ -29,12 +29,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     .from("transactions")
     .select(TRANSACTION_COLUMNS)
     .eq("is_active", true)
-    .order("transaction_date", {
-      ascending: false,
-    })
-    .order("created_at", {
-      ascending: false,
-    })
+    .order("transaction_date", { ascending: false })
 
   if (error) {
     throw error
