@@ -80,3 +80,28 @@ export async function setAgencyActive(
 
   return data as Agency
 }
+export async function getAgencyBalance(
+  agencyId: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("type, amount")
+    .eq("agency_id", agencyId)
+    .eq("party_type", "agency")
+    .eq("is_active", true)
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).reduce(
+    (balance, transaction) => {
+      const amount = Number(transaction.amount)
+
+      return transaction.type === "income"
+        ? balance + amount
+        : balance - amount
+    },
+    0,
+  )
+}

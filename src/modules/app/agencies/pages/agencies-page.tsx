@@ -15,6 +15,7 @@ import { PageHeader } from "../../components/page-header"
 import { AgencySheet } from "../components/agency-sheet"
 import {
   getAgencies,
+  getAgencyBalance,
   setAgencyActive,
 } from "../services/agency-service"
 import type { Agency } from "../types/agency"
@@ -29,6 +30,8 @@ export function AgenciesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAgency, setSelectedAgency] =
     useState<Agency | null>(null)
+    const [agencyBalances, setAgencyBalances] =
+  useState<Record<string, number>>({})
   const navigate = useNavigate()
   const loadAgencies = async (isRefresh = false) => {
     try {
@@ -42,7 +45,20 @@ export function AgenciesPage() {
 
       const data = await getAgencies()
 
-      setAgencies(data)
+const balanceEntries = await Promise.all(
+  data.map(async (agency) => {
+    const balance = await getAgencyBalance(
+      agency.id,
+    )
+
+    return [agency.id, balance] as const
+  }),
+)
+
+setAgencies(data)
+setAgencyBalances(
+  Object.fromEntries(balanceEntries),
+)
     } catch (err) {
       console.error("Failed to load agencies:", err)
 
@@ -266,7 +282,37 @@ export function AgenciesPage() {
   onClick={() =>
     navigate(`/app/agencies/${agency.id}`)
   }
+><div className="mb-3 flex items-center justify-between">
+  <div>
+    <p className="text-xs text-muted-foreground">
+      Balance
+    </p>
+
+    <p
+  className={`text-lg font-bold tracking-tight ${
+    (agencyBalances[agency.id] ?? 0) < 0
+      ? "text-destructive"
+      : "text-foreground"
+  }`}
 >
+  {(agencyBalances[agency.id] ?? 0) < 0
+    ? "−"
+    : ""}
+
+  ৳
+  {Math.abs(
+    agencyBalances[agency.id] ?? 0,
+  ).toLocaleString("en-BD", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}
+</p>
+  </div>
+
+  <span className="text-xs text-muted-foreground">
+    Current
+  </span>
+</div>
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
                     {String(agency.sl).padStart(3, "0")}

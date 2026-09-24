@@ -8,6 +8,7 @@ import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 import { AgentSheet } from "../components/agent-sheet"
 import {
+  getAgentBalance,
   getAgents,
   setAgentActive,
 } from "../services/agent-service"
@@ -23,6 +24,8 @@ export function AgentsPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] =
     useState<Agent | null>(null)
+    const [agentBalances, setAgentBalances] =
+  useState<Record<string, number>>({})
   const navigate = useNavigate()
   const loadAgents = async (isRefresh = false) => {
     try {
@@ -36,7 +39,20 @@ export function AgentsPage() {
 
       const data = await getAgents()
 
-      setAgents(data)
+const balanceEntries = await Promise.all(
+  data.map(async (agent) => {
+    const balance = await getAgentBalance(
+      agent.id,
+    )
+
+    return [agent.id, balance] as const
+  }),
+)
+
+setAgents(data)
+setAgentBalances(
+  Object.fromEntries(balanceEntries),
+)
     } catch (err) {
       console.error("Failed to load agents:", err)
 
@@ -260,7 +276,37 @@ export function AgentsPage() {
   onClick={() =>
     navigate(`/app/agents/${agent.id}`)
   }
+><div className="mb-3 flex items-center justify-between">
+  <div>
+    <p className="text-xs text-muted-foreground">
+      Balance
+    </p>
+
+    <p
+  className={`text-lg font-bold tracking-tight ${
+    (agentBalances[agent.id] ?? 0) < 0
+      ? "text-destructive"
+      : "text-foreground"
+  }`}
 >
+  {(agentBalances[agent.id] ?? 0) < 0
+    ? "−"
+    : ""}
+
+  ৳
+  {Math.abs(
+    agentBalances[agent.id] ?? 0,
+  ).toLocaleString("en-BD", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}
+</p>
+  </div>
+
+  <span className="text-xs text-muted-foreground">
+    Current
+  </span>
+</div>
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
                     {String(agent.sl).padStart(3, "0")}

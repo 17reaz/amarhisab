@@ -80,3 +80,28 @@ export async function setAgentActive(
 
   return data as Agent
 }
+export async function getAgentBalance(
+  agentId: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("type, amount")
+    .eq("agent_id", agentId)
+    .eq("party_type", "agent")
+    .eq("is_active", true)
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).reduce(
+    (balance, transaction) => {
+      const amount = Number(transaction.amount)
+
+      return transaction.type === "income"
+        ? balance + amount
+        : balance - amount
+    },
+    0,
+  )
+}
