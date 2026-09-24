@@ -71,11 +71,10 @@ function formatPaymentMethod(
 export function DashboardPage() {
   const navigate = useNavigate()
 
- const [summary, setSummary] =
-  useState<DashboardSummary | null>(null)
-
-const [agents, setAgents] =
-  useState<Agent[]>([])
+  const [summary, setSummary] =
+    useState<DashboardSummary | null>(null)
+      const [agents, setAgents] =
+    useState<Agent[]>([])
 
   const [agencies, setAgencies] =
     useState<Agency[]>([])
@@ -258,9 +257,7 @@ const [agents, setAgents] =
             <Button
               variant="outline"
               className="h-14 justify-start gap-3"
-              onClick={() =>
-                navigate("/app/transactions")
-              }
+              onClick={() => openQuickTransaction("income")}
             >
               <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
                 <Plus className="size-4" />
@@ -272,9 +269,7 @@ const [agents, setAgents] =
             <Button
               variant="outline"
               className="h-14 justify-start gap-3"
-              onClick={() =>
-                navigate("/app/transactions")
-              }
+              onClick={() => openQuickTransaction("expense")}
             >
               <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
                 <Plus className="size-4" />
