@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import {
+  Building2,
+  Check,
+  Search,
+  UserRound,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,13 +65,20 @@ export function QuickTransactionDialog({
   const [agentId, setAgentId] = useState("")
   const [agencyId, setAgencyId] = useState("")
 
-  const [description, setDescription] = useState("")
-  const [referenceNo, setReferenceNo] = useState("")
+  const [partySearch, setPartySearch] =
+    useState("")
+
+  const [description, setDescription] =
+    useState("")
+
+  const [referenceNo, setReferenceNo] =
+    useState("")
 
   const [transactionDate, setTransactionDate] =
     useState("")
 
   const [loading, setLoading] = useState(false)
+
   const [error, setError] =
     useState<string | null>(null)
 
@@ -78,6 +91,7 @@ export function QuickTransactionDialog({
     setPartyType("agent")
     setAgentId("")
     setAgencyId("")
+    setPartySearch("")
 
     setDescription("")
     setReferenceNo("")
@@ -90,12 +104,61 @@ export function QuickTransactionDialog({
   }, [open, type])
 
   useEffect(() => {
+    setPartySearch("")
+
     if (partyType === "agent") {
       setAgencyId("")
     } else {
       setAgentId("")
     }
   }, [partyType])
+
+  const filteredAgents = useMemo(() => {
+    const search = partySearch.trim().toLowerCase()
+
+    return agents
+      .filter((agent) => agent.is_active)
+      .filter((agent) => {
+        if (!search) return true
+
+        return (
+          agent.name.toLowerCase().includes(search) ||
+          agent.code.toLowerCase().includes(search)
+        )
+      })
+      .slice(0, 20)
+  }, [agents, partySearch])
+
+  const filteredAgencies = useMemo(() => {
+    const search = partySearch.trim().toLowerCase()
+
+    return agencies
+      .filter((agency) => agency.is_active)
+      .filter((agency) => {
+        if (!search) return true
+
+        return agency.name
+          .toLowerCase()
+          .includes(search)
+      })
+      .slice(0, 20)
+  }, [agencies, partySearch])
+
+  const selectedAgent = useMemo(
+    () =>
+      agents.find(
+        (agent) => agent.id === agentId,
+      ) ?? null,
+    [agents, agentId],
+  )
+
+  const selectedAgency = useMemo(
+    () =>
+      agencies.find(
+        (agency) => agency.id === agencyId,
+      ) ?? null,
+    [agencies, agencyId],
+  )
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
@@ -174,6 +237,11 @@ export function QuickTransactionDialog({
       ? "Income"
       : "Expense"
 
+  const selectedPartyName =
+    partyType === "agent"
+      ? selectedAgent?.name
+      : selectedAgency?.name
+
   return (
     <Dialog
       open={open}
@@ -199,98 +267,183 @@ export function QuickTransactionDialog({
           <div className="space-y-2">
             <Label>Party</Label>
 
-            <Select
-              value={partyType}
-              onValueChange={(value) =>
-                setPartyType(
-                  value as PartyType,
-                )
-              }
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select party" />
-              </SelectTrigger>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={
+                  partyType === "agent"
+                    ? "default"
+                    : "outline"
+                }
+                className="h-11 justify-center gap-2"
+                onClick={() =>
+                  setPartyType("agent")
+                }
+                disabled={loading}
+              >
+                <UserRound className="size-4" />
+                Agent
+              </Button>
 
-              <SelectContent>
-                <SelectItem value="agent">
-                  Agent
-                </SelectItem>
-
-                <SelectItem value="agency">
-                  Agency
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <Button
+                type="button"
+                variant={
+                  partyType === "agency"
+                    ? "default"
+                    : "outline"
+                }
+                className="h-11 justify-center gap-2"
+                onClick={() =>
+                  setPartyType("agency")
+                }
+                disabled={loading}
+              >
+                <Building2 className="size-4" />
+                Agency
+              </Button>
+            </div>
           </div>
 
-          {/* Agent */}
+          {/* Party Search */}
 
-          {partyType === "agent" ? (
-            <div className="space-y-2">
-              <Label>Agent</Label>
+          <div className="space-y-2">
+            <Label>
+              {partyType === "agent"
+                ? "Select Agent"
+                : "Select Agency"}
+            </Label>
 
-              <Select
-                value={agentId}
-                onValueChange={(value) => setAgentId(value ?? "")}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+              <Input
+                value={partySearch}
+                onChange={(event) =>
+                  setPartySearch(
+                    event.target.value,
+                  )
+                }
+                placeholder={
+                  partyType === "agent"
+                    ? "Search agent..."
+                    : "Search agency..."
+                }
+                className="pl-9"
                 disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select agent" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {agents
-                    .filter(
-                      (agent) =>
-                        agent.is_active,
-                    )
-                    .map((agent) => (
-                      <SelectItem
-                        key={agent.id}
-                        value={agent.id}
-                      >
-                        {agent.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
-          ) : null}
 
-          {/* Agency */}
+            <div className="max-h-44 overflow-y-auto rounded-lg border">
+              {partyType === "agent" ? (
+                filteredAgents.length ? (
+                  <div className="divide-y">
+                    {filteredAgents.map(
+                      (agent) => {
+                        const selected =
+                          agent.id === agentId
 
-          {partyType === "agency" ? (
-            <div className="space-y-2">
-              <Label>Agency</Label>
+                        return (
+                          <button
+                            key={agent.id}
+                            type="button"
+                            disabled={loading}
+                            onClick={() => {
+                              setAgentId(
+                                agent.id,
+                              )
+                              setError(null)
+                            }}
+                            className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
+                              selected
+                                ? "bg-muted"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                              <UserRound className="size-4" />
+                            </div>
 
-              <Select
-                value={agencyId}
-                onValueChange={(value) => setAgencyId(value ?? "")}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select agency" />
-                </SelectTrigger>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {agent.name}
+                              </p>
 
-                <SelectContent>
-                  {agencies
-                    .filter(
-                      (agency) =>
-                        agency.is_active,
-                    )
-                    .map((agency) => (
-                      <SelectItem
-                        key={agency.id}
-                        value={agency.id}
-                      >
-                        {agency.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                              <p className="text-xs text-muted-foreground">
+                                {agent.code}
+                              </p>
+                            </div>
+
+                            {selected ? (
+                              <Check className="size-4 shrink-0" />
+                            ) : null}
+                          </button>
+                        )
+                      },
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                    No agents found.
+                  </div>
+                )
+              ) : filteredAgencies.length ? (
+                <div className="divide-y">
+                  {filteredAgencies.map(
+                    (agency) => {
+                      const selected =
+                        agency.id === agencyId
+
+                      return (
+                        <button
+                          key={agency.id}
+                          type="button"
+                          disabled={loading}
+                          onClick={() => {
+                            setAgencyId(
+                              agency.id,
+                            )
+                            setError(null)
+                          }}
+                          className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
+                            selected
+                              ? "bg-muted"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                            <Building2 className="size-4" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {agency.name}
+                            </p>
+                          </div>
+
+                          {selected ? (
+                            <Check className="size-4 shrink-0" />
+                          ) : null}
+                        </button>
+                      )
+                    },
+                  )}
+                </div>
+              ) : (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  No agencies found.
+                </div>
+              )}
             </div>
-          ) : null}
+
+            {selectedPartyName ? (
+              <p className="text-xs text-muted-foreground">
+                Selected:{" "}
+                <span className="font-medium text-foreground">
+                  {selectedPartyName}
+                </span>
+              </p>
+            ) : null}
+          </div>
 
           {/* Amount */}
 
