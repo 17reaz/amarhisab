@@ -9,7 +9,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-
+import { useNavigate } from "react-router-dom"
 import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 import { AgencySheet } from "../components/agency-sheet"
@@ -29,7 +29,7 @@ export function AgenciesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAgency, setSelectedAgency] =
     useState<Agency | null>(null)
-
+  const navigate = useNavigate()
   const loadAgencies = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -261,9 +261,12 @@ export function AgenciesPage() {
           <div className="space-y-3">
             {filteredAgencies.map((agency) => (
               <div
-                key={agency.id}
-                className="rounded-2xl border bg-card p-4 shadow-sm"
-              >
+  key={agency.id}
+  className="cursor-pointer rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40"
+  onClick={() =>
+    navigate(`/app/agencies/${agency.id}`)
+  }
+>
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
                     {String(agency.sl).padStart(3, "0")}
@@ -291,9 +294,10 @@ export function AgenciesPage() {
                         variant="ghost"
                         size="icon"
                         className="size-9 shrink-0"
-                        onClick={() =>
-                          handleEdit(agency)
-                        }
+                        onClick={(event) => {
+  event.stopPropagation()
+  handleEdit(agency)
+}}
                         aria-label={`Edit ${agency.name}`}
                       >
                         <Pencil className="size-4" />
@@ -303,9 +307,10 @@ export function AgenciesPage() {
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          handleToggleActive(agency)
-                        }
+                        onClick={(event) => {
+  event.stopPropagation()
+  handleToggleActive(agency)
+}}
                         className="flex items-center gap-2"
                       >
                         <span

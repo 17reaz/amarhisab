@@ -12,6 +12,8 @@ import { TransactionsPage } from "@/modules/app/transactions/pages/transactions-
 import { LoginPage } from "@/modules/auth/pages/login-page"
 import { useAuth } from "@/modules/auth/hooks/use-auth"
 import { ReportsPage } from "@/modules/app/reports/pages/reports-page"
+import { AgentProfilePage } from "@/modules/app/agents/pages/agent-profile-page"
+import { AgencyProfilePage } from "@/modules/app/agencies/pages/agency-profile-page"
 function ProtectedRoutes() {
   const { loading, isAuthenticated } = useAuth()
 
@@ -53,6 +55,15 @@ function ProtectedRoutes() {
 <Route
   path="/app/reports"
   element={<ReportsPage />}
+/>
+<Route
+  path="/app/agents/:id"
+  element={<AgentProfilePage />}
+/>
+
+<Route
+  path="/app/agencies/:id"
+  element={<AgencyProfilePage />}
 />
 
 <Route

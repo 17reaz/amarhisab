@@ -3,7 +3,7 @@ import { Pencil, Plus, RefreshCw, Search, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-
+import { useNavigate } from "react-router-dom"
 import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
 import { AgentSheet } from "../components/agent-sheet"
@@ -19,11 +19,11 @@ export function AgentsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] =
     useState<Agent | null>(null)
-
+  const navigate = useNavigate()
   const loadAgents = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -255,9 +255,12 @@ export function AgentsPage() {
           <div className="space-y-3">
             {filteredAgents.map((agent) => (
               <div
-                key={agent.id}
-                className="rounded-2xl border bg-card p-4 shadow-sm"
-              >
+  key={agent.id}
+  className="cursor-pointer rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40"
+  onClick={() =>
+    navigate(`/app/agents/${agent.id}`)
+  }
+>
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
                     {String(agent.sl).padStart(3, "0")}
@@ -285,9 +288,10 @@ export function AgentsPage() {
                         variant="ghost"
                         size="icon"
                         className="size-9 shrink-0"
-                        onClick={() =>
-                          handleEdit(agent)
-                        }
+                        onClick={(event) => {
+  event.stopPropagation()
+  handleEdit(agent)
+}}
                         aria-label={`Edit ${agent.name}`}
                       >
                         <Pencil className="size-4" />
@@ -297,9 +301,10 @@ export function AgentsPage() {
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          handleToggleActive(agent)
-                        }
+                        onClick={(event) => {
+  event.stopPropagation()
+  handleToggleActive(agent)
+}}
                         className="flex items-center gap-2"
                       >
                         <span
