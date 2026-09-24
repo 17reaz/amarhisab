@@ -20,6 +20,23 @@ import {
 } from "@/components/ui/card"
 
 import { AppShell } from "../components/app-shell"
+import { QuickTransactionDialog } from "../transactions/components/quick-transaction-dialog"
+import type {
+  Agent,
+} from "../agents/types/agent"
+import type {
+  Agency,
+} from "../agencies/types/agency"
+import {
+  getAgents,
+} from "../agents/services/agent-service"
+import {
+  getAgencies,
+} from "../agencies/services/agency-service"
+import type {
+  Transaction,
+  TransactionType,
+} from "../transactions/types/transaction"
 import {
   getDashboardSummary,
   type DashboardSummary,
@@ -54,8 +71,20 @@ function formatPaymentMethod(
 export function DashboardPage() {
   const navigate = useNavigate()
 
-  const [summary, setSummary] =
-    useState<DashboardSummary | null>(null)
+ const [summary, setSummary] =
+  useState<DashboardSummary | null>(null)
+
+const [agents, setAgents] =
+  useState<Agent[]>([])
+
+  const [agencies, setAgencies] =
+    useState<Agency[]>([])
+
+  const [quickTransactionOpen, setQuickTransactionOpen] =
+    useState(false)
+
+  const [quickTransactionType, setQuickTransactionType] =
+    useState<TransactionType>("income")
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] =
@@ -63,7 +92,18 @@ export function DashboardPage() {
 
   const [error, setError] =
     useState<string | null>(null)
+  const openQuickTransaction = (
+    type: TransactionType,
+  ) => {
+    setQuickTransactionType(type)
+    setQuickTransactionOpen(true)
+  }
 
+  const handleQuickTransactionSaved = (
+    _transaction: Transaction,
+  ) => {
+    void loadDashboard(true)
+  }
   const loadDashboard = async (
     isRefresh = false,
   ) => {
@@ -96,8 +136,28 @@ export function DashboardPage() {
     }
   }
 
-  useEffect(() => {
+    useEffect(() => {
     loadDashboard()
+
+    const loadParties = async () => {
+      try {
+        const [agentData, agencyData] =
+          await Promise.all([
+            getAgents(),
+            getAgencies(),
+          ])
+
+        setAgents(agentData)
+        setAgencies(agencyData)
+      } catch (err) {
+        console.error(
+          "Failed to load parties:",
+          err,
+        )
+      }
+    }
+
+    void loadParties()
   }, [])
 
   return (
@@ -125,7 +185,14 @@ export function DashboardPage() {
 
         {/* Income / Expense */}
         <div className="grid grid-cols-2 gap-3">
-  <Card>
+        <button
+  type="button"
+  onClick={() =>
+    openQuickTransaction("income")
+  }
+  className="text-left"
+>
+  <Card className="cursor-pointer transition-colors hover:bg-muted/50 active:bg-muted">
     <CardContent className="flex items-center gap-3 p-4">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
         <ArrowDownLeft className="size-5" />
@@ -146,8 +213,16 @@ export function DashboardPage() {
       </div>
     </CardContent>
   </Card>
-
-  <Card>
+  </button>
+<button
+  type="button"
+  onClick={() =>
+    openQuickTransaction("expense")
+  }
+  className="text-left"
+>
+  <Card className="cursor-pointer transition-colors hover:bg-muted/50 active:bg-muted">
+    
     <CardContent className="flex items-center gap-3 p-4">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
         <ArrowUpRight className="size-5" />
@@ -168,6 +243,7 @@ export function DashboardPage() {
       </div>
     </CardContent>
   </Card>
+  </button>
 </div>
 
         {/* Quick Actions */}
@@ -430,6 +506,14 @@ export function DashboardPage() {
             : "Refresh Dashboard"}
         </Button>
       </div>
+            <QuickTransactionDialog
+        open={quickTransactionOpen}
+        onOpenChange={setQuickTransactionOpen}
+        type={quickTransactionType}
+        agents={agents}
+        agencies={agencies}
+        onSaved={handleQuickTransactionSaved}
+      />
     </AppShell>
   )
 }
