@@ -2,12 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  CircleAlert,
   Plus,
+  Receipt,
   RefreshCw,
   Search,
   X,
 } from "lucide-react"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { AppShell } from "../../components/app-shell"
 import { PageHeader } from "../../components/page-header"
@@ -78,8 +85,6 @@ function TransactionRow({
 }: TransactionRowProps) {
   const isIncome = transaction.type === "income"
 
-  const partyLabel = transaction.party_type === "agent" ? "Agent" : "Agency"
-
   const title = transaction.description || (isIncome ? "Income" : "Expense")
 
   return (
@@ -87,38 +92,29 @@ function TransactionRow({
       type="button"
       onClick={() => onSelect(transaction)}
       aria-label={`View ${title}`}
-      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
+      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:bg-muted"
     >
-      {/* Type Icon */}
-      <div
-        className={`flex size-11 shrink-0 items-center justify-center rounded-full ${
-          isIncome
-            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-            : "bg-red-500/10 text-red-600 dark:text-red-400"
-        }`}
-      >
-        {isIncome ? (
-          <ArrowDownLeft className="size-5" />
-        ) : (
-          <ArrowUpRight className="size-5" />
-        )}
-      </div>
-
-      {/* Description + Party */}
+      {/* Description + Party + Payment method */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{title}</p>
 
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {partyName ? `${partyName} • ` : ""}
-          {partyLabel}
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          {partyName ? (
+            <span className="min-w-0 truncate text-xs text-muted-foreground">
+              {partyName}
+            </span>
+          ) : null}
 
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {formatPaymentMethod(transaction.payment_method)}
-        </p>
+          <Badge
+            variant="secondary"
+            className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
+          >
+            {formatPaymentMethod(transaction.payment_method)}
+          </Badge>
+        </div>
       </div>
 
-      {/* Amount + Date */}
+      {/* Amount + Date (color shows income / expense) */}
       <div className="shrink-0 text-right">
         <p
           className={`text-sm font-bold tabular-nums tracking-tight ${
@@ -317,9 +313,9 @@ export function TransactionsPage() {
     <AppShell title="Transactions">
       {/* Sticky page header — always stuck below AppHeader.
           Filters live inside this sticky block too:
-          - search closed  -> full filter row shown under the title
+          - search closed  -> full filter tabs shown under the title
           - search open    -> compact filter dropdown shown beside the search input */}
-      <div className="sticky top-14 z-30 -mx-4 mb-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="sticky top-14 z-30 -mx-4 mb-4 border-b bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <PageHeader
           title="Transactions"
           description="Track your income and expenses"
@@ -355,7 +351,7 @@ export function TransactionsPage() {
 
               <Button
                 size="icon"
-                className="size-10 rounded-full"
+                className="size-10 rounded-full shadow-sm"
                 onClick={handleAdd}
                 aria-label="Add transaction"
               >
@@ -366,139 +362,185 @@ export function TransactionsPage() {
         />
 
         {searchOpen ? (
-  <div className="mt-3 flex items-center gap-2">
-    <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="mt-3 flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-      <Input
-        autoFocus
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search transactions..."
-        className="h-11 rounded-lg pl-9 pr-3"
-      />
-    </div>
+              <Input
+                autoFocus
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search transactions..."
+                className="h-11 rounded-lg pl-9 pr-3"
+              />
+            </div>
 
-    <Select
-  value={filter}
-  onValueChange={(value) =>
-    setFilter((value ?? "all") as FilterType)
-  }
->
-  <SelectTrigger className="w-[110px] shrink-0 rounded-lg data-[size=default]:h-11">
-    <SelectValue placeholder="Filter" />
-  </SelectTrigger>
+            <Select
+              value={filter}
+              onValueChange={(value) =>
+                setFilter((value ?? "all") as FilterType)
+              }
+            >
+              <SelectTrigger className="w-[110px] shrink-0 rounded-lg data-[size=default]:h-11">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
 
-  <SelectContent>
-    {FILTERS.map((item) => (
-      <SelectItem key={item.value} value={item.value}>
-        {item.label}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-  </div>
-) : (
-          /* Search closed: full filter row under the title, sticky */
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {FILTERS.map((item) => (
-              <Button
-                key={item.value}
-                variant={filter === item.value ? "default" : "outline"}
-                onClick={() => setFilter(item.value)}
-              >
-                {item.label}
-              </Button>
-            ))}
+              <SelectContent>
+                {FILTERS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        ) : (
+          /* Search closed: full filter tabs under the title, sticky */
+          <Tabs
+            value={filter}
+            onValueChange={(value) => setFilter(value as FilterType)}
+            className="mt-3"
+          >
+            <TabsList className="grid h-11 w-full grid-cols-3">
+              {FILTERS.map((item) => (
+                <TabsTrigger key={item.value} value={item.value}>
+                  {item.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         )}
       </div>
 
       <div className="space-y-4">
         {/* Summary */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <ArrowDownLeft className="size-5" />
+        <Card>
+          <CardContent className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <ArrowDownLeft className="size-5" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Income</p>
+
+                {loading ? (
+                  <Skeleton className="mt-1 h-5 w-20" />
+                ) : (
+                  <p className="truncate text-base font-semibold tabular-nums">
+                    ৳ {formatAmount(totalIncome)}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Income</p>
+            <Separator orientation="vertical" className="h-10" />
 
-              <p className="truncate text-base font-semibold">
-                ৳ {formatAmount(totalIncome)}
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                <ArrowUpRight className="size-5" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Expense</p>
+
+                {loading ? (
+                  <Skeleton className="mt-1 h-5 w-20" />
+                ) : (
+                  <p className="truncate text-base font-semibold tabular-nums">
+                    ৳ {formatAmount(totalExpense)}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-              <ArrowUpRight className="size-5" />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Expense</p>
-
-              <p className="truncate text-base font-semibold">
-                ৳ {formatAmount(totalExpense)}
-              </p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Error */}
         {error ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm text-destructive">{error}</p>
+          <Alert variant="destructive">
+            <CircleAlert className="size-4" />
+            <AlertTitle>Could not load transactions</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>{error}</p>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => void loadData()}
-            >
-              Try again
-            </Button>
-          </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void loadData()}
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : null}
 
         {/* Loading */}
         {loading ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            Loading transactions...
-          </div>
+          <Card className="overflow-hidden">
+            <CardContent className="divide-y p-0">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Skeleton className="ml-auto h-4 w-16" />
+                    <Skeleton className="ml-auto h-3 w-14" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         ) : null}
 
         {/* Empty */}
         {!loading && !error && filteredTransactions.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <p className="font-medium">No transactions found</p>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <Receipt className="size-5 text-muted-foreground" />
+              </div>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add your first transaction to get started.
-            </p>
+              <p className="font-medium">No transactions found</p>
 
-            <Button className="mt-4" onClick={handleAdd}>
-              <Plus />
-              Add Transaction
-            </Button>
-          </div>
+              <p className="text-sm text-muted-foreground">
+                Add your first transaction to get started.
+              </p>
+
+              <Button className="mt-3" onClick={handleAdd}>
+                <Plus />
+                Add Transaction
+              </Button>
+            </CardContent>
+          </Card>
         ) : null}
 
         {/* Transaction List */}
         {!loading && filteredTransactions.length > 0 ? (
-          <Card className="overflow-hidden rounded-2xl border-0 shadow-sm ring-1 ring-border/60">
-            <CardContent className="divide-y p-0">
-              {filteredTransactions.map((transaction) => (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  partyName={getPartyName(transaction)}
-                  onSelect={handleView}
-                />
-              ))}
-            </CardContent>
-          </Card>
+          <section className="space-y-2">
+            <p className="px-1 text-xs text-muted-foreground">
+              {filteredTransactions.length}{" "}
+              {filteredTransactions.length === 1
+                ? "transaction"
+                : "transactions"}
+            </p>
+
+            <Card className="overflow-hidden">
+              <CardContent className="divide-y p-0">
+                {filteredTransactions.map((transaction) => (
+                  <TransactionRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    partyName={getPartyName(transaction)}
+                    onSelect={handleView}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </section>
         ) : null}
       </div>
 

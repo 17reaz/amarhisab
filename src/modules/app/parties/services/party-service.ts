@@ -1,78 +1,54 @@
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/db"
+
+import { syncAll } from "@/lib/cache/sync"
 
 import type { Party } from "../types/party"
 
-interface PartyTransaction {
-  party_type: "agent" | "agency"
-  agent_id: string | null
-  agency_id: string | null
-  transaction_date: string
-  created_at: string
-}
-
-interface PartyRow {
-  id: string
-  name: string
-  phone: string | null
-}
-
 export async function getParties(): Promise<Party[]> {
   const [
-    agentsResult,
-    agenciesResult,
-    transactionsResult,
+    agents,
+    agencies,
+    transactions,
   ] = await Promise.all([
-    supabase
-      .from("agents")
-      .select("id, name, phone")
-      .eq("is_active", true),
+    db.agents
+      .filter((agent) => agent.is_active)
+      .toArray(),
 
-    supabase
-      .from("agencies")
-      .select("id, name, phone")
-      .eq("is_active", true),
+    db.agencies
+      .filter((agency) => agency.is_active)
+      .toArray(),
 
-    supabase
-      .from("transactions")
-      .select(
-        `
-          party_type,
-          agent_id,
-          agency_id,
-          transaction_date,
-          created_at
-        `,
+    db.transactions
+      .filter(
+        (transaction) => transaction.is_active,
       )
-      .eq("is_active", true)
-      .order("transaction_date", {
-        ascending: false,
-      })
-      .order("created_at", {
-        ascending: false,
-      }),
+      .toArray(),
   ])
 
-  if (agentsResult.error) {
-    throw agentsResult.error
-  }
+  const latestTransactions = new Map<
+    string,
+    string
+  >()
 
-  if (agenciesResult.error) {
-    throw agenciesResult.error
-  }
+  const transactionCounts = new Map<
+    string,
+    number
+  >()
 
-  if (transactionsResult.error) {
-    throw transactionsResult.error
-  }
+  const sortedTransactions = transactions.sort(
+    (a, b) => {
+      return (
+        b.transaction_date.localeCompare(
+          a.transaction_date,
+        ) ||
+        b.created_at.localeCompare(
+          a.created_at,
+        )
+      )
+    },
+  )
 
-  const latestTransactions = new Map<string, string>()
-
-  const transactionCounts = new Map<string, number>()
-
-  const transactions =
-    (transactionsResult.data ??
-      []) as PartyTransaction[]
-
-  for (const transaction of transactions) {
+  for (const transaction of sortedTransactions) {
     const partyId =
       transaction.party_type === "agent"
         ? transaction.agent_id
@@ -85,63 +61,57 @@ export async function getParties(): Promise<Party[]> {
     const key =
       `${transaction.party_type}:${partyId}`
 
+    // Transaction count
     transactionCounts.set(
       key,
       (transactionCounts.get(key) ?? 0) + 1,
     )
 
-    if (latestTransactions.has(key)) {
-      continue
+    // Latest transaction date
+    if (!latestTransactions.has(key)) {
+      latestTransactions.set(
+        key,
+        transaction.transaction_date,
+      )
     }
-
-    latestTransactions.set(
-      key,
-      transaction.transaction_date,
-    )
   }
 
-  const agents =
-    (agentsResult.data ?? []) as PartyRow[]
-
-  const agencies =
-    (agenciesResult.data ?? []) as PartyRow[]
-
   const parties: Party[] = [
-    ...agents.map((agent) => ({
-      key: `agent:${agent.id}`,
-      id: agent.id,
-      type: "agent" as const,
-      name: agent.name,
-      phone: agent.phone,
-      lastTransactionDate:
-        latestTransactions.get(
-          `agent:${agent.id}`,
-        ) ?? null,
-      transactionCount:
-        transactionCounts.get(
-          `agent:${agent.id}`,
-        ) ?? 0,
-    })),
+    ...agents.map((agent) => {
+      const key = `agent:${agent.id}`
 
-    ...agencies.map((agency) => ({
-      key: `agency:${agency.id}`,
-      id: agency.id,
-      type: "agency" as const,
-      name: agency.name,
-      phone: agency.phone,
-      lastTransactionDate:
-        latestTransactions.get(
-          `agency:${agency.id}`,
-        ) ?? null,
-      transactionCount:
-        transactionCounts.get(
-          `agency:${agency.id}`,
-        ) ?? 0,
-    })),
+      return {
+        key,
+        id: agent.id,
+        type: "agent" as const,
+        name: agent.name,
+        phone: agent.phone,
+        lastTransactionDate:
+          latestTransactions.get(key) ?? null,
+        transactionCount:
+          transactionCounts.get(key) ?? 0,
+      }
+    }),
+
+    ...agencies.map((agency) => {
+      const key = `agency:${agency.id}`
+
+      return {
+        key,
+        id: agency.id,
+        type: "agency" as const,
+        name: agency.name,
+        phone: agency.phone,
+        lastTransactionDate:
+          latestTransactions.get(key) ?? null,
+        transactionCount:
+          transactionCounts.get(key) ?? 0,
+      }
+    }),
   ]
 
   return parties.sort((a, b) => {
-    // যাদের transaction নেই তারা শেষে যাবে
+    // Both have no transactions
     if (
       !a.lastTransactionDate &&
       !b.lastTransactionDate
@@ -149,6 +119,7 @@ export async function getParties(): Promise<Party[]> {
       return a.name.localeCompare(b.name)
     }
 
+    // No transaction goes last
     if (!a.lastTransactionDate) {
       return 1
     }
@@ -157,7 +128,7 @@ export async function getParties(): Promise<Party[]> {
       return -1
     }
 
-    // Latest transaction আগে
+    // Latest transaction first
     return (
       b.lastTransactionDate.localeCompare(
         a.lastTransactionDate,
@@ -165,4 +136,10 @@ export async function getParties(): Promise<Party[]> {
       a.name.localeCompare(b.name)
     )
   })
+}
+
+export async function syncParties(): Promise<Party[]> {
+  await syncAll()
+
+  return getParties()
 }

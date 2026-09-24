@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-
+import { db } from "@/lib/db"
 import type {
   Agent,
   CreateAgentInput,
@@ -9,16 +9,41 @@ const AGENT_COLUMNS =
   "id, sl, name, phone, is_active, created_at"
 
 export async function getAgents(): Promise<Agent[]> {
-  const { data, error } = await supabase
-    .from("agents")
-    .select(AGENT_COLUMNS)
-    .order("sl", { ascending: true })
+  const cachedAgents = await db.agents
+    .orderBy("sl")
+    .toArray()
 
-  if (error) {
+  try {
+    const { data, error } = await supabase
+      .from("agents")
+      .select(AGENT_COLUMNS)
+      .order("sl", { ascending: true })
+
+    if (error) {
+      throw error
+    }
+
+    const agents = (data ?? []) as Agent[]
+
+    await db.agents.clear()
+
+    if (agents.length > 0) {
+      await db.agents.bulkPut(agents)
+    }
+
+    return agents
+  } catch (error) {
+    if (cachedAgents.length > 0) {
+      console.warn(
+        "Supabase unavailable. Using cached agents.",
+        error,
+      )
+
+      return cachedAgents
+    }
+
     throw error
   }
-
-  return (data ?? []) as Agent[]
 }
 
 export async function createAgent(

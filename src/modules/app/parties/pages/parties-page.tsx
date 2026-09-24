@@ -13,7 +13,10 @@ import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 
 import { AppShell } from "../../components/app-shell"
-import { getParties } from "../services/party-service"
+import {
+  getParties,
+  syncParties,
+} from "../services/party-service"
 import type { Party } from "../types/party"
 
 export function PartiesPage() {
@@ -39,10 +42,27 @@ export function PartiesPage() {
         setLoading(true)
         setError(null)
 
-        const data = await getParties()
+        // Show cached data immediately.
+        const cachedData = await getParties()
 
         if (mounted) {
-          setParties(data)
+          setParties(cachedData)
+          setLoading(false)
+        }
+
+        // Fetch fresh data from Supabase
+        // and update Dexie in the background.
+        try {
+          const freshData = await syncParties()
+
+          if (mounted) {
+            setParties(freshData)
+          }
+        } catch (syncError) {
+          console.warn(
+            "Failed to sync parties:",
+            syncError,
+          )
         }
       } catch (err) {
         console.error(
@@ -56,9 +76,6 @@ export function PartiesPage() {
               ? err.message
               : "Failed to load parties.",
           )
-        }
-      } finally {
-        if (mounted) {
           setLoading(false)
         }
       }
@@ -153,69 +170,69 @@ export function PartiesPage() {
           filteredParties.length > 0 && (
             <div className="divide-y rounded-lg border">
               {filteredParties.map((party) => {
-  const Icon =
-    party.type === "agent"
-      ? UserRound
-      : Building2
+                const Icon =
+                  party.type === "agent"
+                    ? UserRound
+                    : Building2
 
-  return (
-    <button
-      key={party.key}
-      type="button"
-      onClick={() =>
-        handlePartyClick(party)
-      }
-      className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
-    >
-      {/* Icon */}
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
-        <Icon className="size-4" />
-      </div>
+                return (
+                  <button
+                    key={party.key}
+                    type="button"
+                    onClick={() =>
+                      handlePartyClick(party)
+                    }
+                    className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
+                  >
+                    {/* Icon */}
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                      <Icon className="size-4" />
+                    </div>
 
-      {/* Party info */}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {party.name}
-        </p>
+                    {/* Party info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {party.name}
+                      </p>
 
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {party.type === "agent"
-            ? "Agent"
-            : "Agency"}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {party.type === "agent"
+                          ? "Agent"
+                          : "Agency"}
 
-          {party.phone
-            ? ` • ${party.phone}`
-            : ""}
-        </p>
-      </div>
+                        {party.phone
+                          ? ` • ${party.phone}`
+                          : ""}
+                      </p>
+                    </div>
 
-      {/* Last transaction + count */}
-      <div className="shrink-0 text-right">
-        <p className="text-xs font-medium text-muted-foreground">
-          {party.lastTransactionDate
-            ? new Date(
-                `${party.lastTransactionDate}T00:00:00`,
-              ).toLocaleDateString(
-                "en-GB",
-                {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                },
-              )
-            : "No transaction"}
-        </p>
+                    {/* Last transaction + count */}
+                    <div className="shrink-0 text-right">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {party.lastTransactionDate
+                          ? new Date(
+                              `${party.lastTransactionDate}T00:00:00`,
+                            ).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : "No transaction"}
+                      </p>
 
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {party.transactionCount}{" "}
-          {party.transactionCount === 1
-            ? "txn"
-            : "txns"}
-        </p>
-      </div>
-    </button>
-  )
-})}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {party.transactionCount}{" "}
+                        {party.transactionCount === 1
+                          ? "txn"
+                          : "txns"}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
       </div>

@@ -1,3 +1,4 @@
+import { db } from "@/lib/db"
 import { supabase } from "@/lib/supabase"
 
 import type {
@@ -25,17 +26,61 @@ const TRANSACTION_COLUMNS = `
 `
 
 export async function getTransactions(): Promise<Transaction[]> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select(TRANSACTION_COLUMNS)
-    .eq("is_active", true)
-    .order("transaction_date", { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(TRANSACTION_COLUMNS)
+      .eq("is_active", true)
+      .order("transaction_date", {
+        ascending: false,
+      })
+      .order("created_at", {
+        ascending: false,
+      })
 
-  if (error) {
+    if (error) {
+      throw error
+    }
+
+    const transactions =
+      (data ?? []) as Transaction[]
+
+    await db.transactions.clear()
+
+    if (transactions.length > 0) {
+      await db.transactions.bulkPut(transactions)
+    }
+
+    return transactions
+  } catch (error) {
+    const cachedTransactions = (
+      await db.transactions.toArray()
+    )
+      .filter(
+        (transaction) => transaction.is_active,
+      )
+      .sort((a, b) => {
+        return (
+          b.transaction_date.localeCompare(
+            a.transaction_date,
+          ) ||
+          b.created_at.localeCompare(
+            a.created_at,
+          )
+        )
+      })
+
+    if (cachedTransactions.length > 0) {
+      console.warn(
+        "Supabase unavailable. Using cached transactions.",
+        error,
+      )
+
+      return cachedTransactions
+    }
+
     throw error
   }
-
-  return (data ?? []) as Transaction[]
 }
 
 export async function createTransaction(
@@ -47,9 +92,11 @@ export async function createTransaction(
       type: input.type,
       amount: input.amount,
       transaction_date: input.transaction_date,
-      description: input.description?.trim() || null,
+      description:
+        input.description?.trim() || null,
       payment_method: input.payment_method,
-      reference_no: input.reference_no?.trim() || null,
+      reference_no:
+        input.reference_no?.trim() || null,
 
       party_type: input.party_type,
 
@@ -70,7 +117,11 @@ export async function createTransaction(
     throw error
   }
 
-  return data as Transaction
+  const transaction = data as Transaction
+
+  await db.transactions.put(transaction)
+
+  return transaction
 }
 
 export async function updateTransaction(
@@ -83,9 +134,11 @@ export async function updateTransaction(
       type: input.type,
       amount: input.amount,
       transaction_date: input.transaction_date,
-      description: input.description?.trim() || null,
+      description:
+        input.description?.trim() || null,
       payment_method: input.payment_method,
-      reference_no: input.reference_no?.trim() || null,
+      reference_no:
+        input.reference_no?.trim() || null,
 
       party_type: input.party_type,
 
@@ -107,7 +160,11 @@ export async function updateTransaction(
     throw error
   }
 
-  return data as Transaction
+  const transaction = data as Transaction
+
+  await db.transactions.put(transaction)
+
+  return transaction
 }
 
 export async function archiveTransaction(
@@ -126,5 +183,9 @@ export async function archiveTransaction(
     throw error
   }
 
-  return data as Transaction
+  const transaction = data as Transaction
+
+  await db.transactions.put(transaction)
+
+  return transaction
 }

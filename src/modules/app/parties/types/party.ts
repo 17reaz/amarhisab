@@ -1,4 +1,6 @@
-export type PartyType = "agent" | "agency"
+export type PartyType =
+  | "agent"
+  | "agency"
 
 export interface Party {
   key: string
