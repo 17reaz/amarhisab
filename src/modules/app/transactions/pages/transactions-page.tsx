@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import {
-  ArrowDownRight,
+  ArrowDownLeft,
   ArrowUpRight,
   Pencil,
   Plus,
@@ -9,6 +9,10 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
 import { AppShell } from "../../components/app-shell"
@@ -44,6 +48,7 @@ export function TransactionsPage() {
     useState<FilterType>("all")
 
   const [loading, setLoading] = useState(true)
+
   const [error, setError] =
     useState<string | null>(null)
 
@@ -200,33 +205,34 @@ export function TransactionsPage() {
   }
 
   const handleSaved = (
-  transaction: Transaction,
-) => {
-  if (!transaction.is_active) {
-    setTransactions((current) =>
-      current.filter(
-        (item) => item.id !== transaction.id,
-      ),
-    )
-    return
-  }
-
-  setTransactions((current) => {
-    const exists = current.some(
-      (item) => item.id === transaction.id,
-    )
-
-    if (exists) {
-      return current.map((item) =>
-        item.id === transaction.id
-          ? transaction
-          : item,
+    transaction: Transaction,
+  ) => {
+    if (!transaction.is_active) {
+      setTransactions((current) =>
+        current.filter(
+          (item) => item.id !== transaction.id,
+        ),
       )
+
+      return
     }
 
-    return [transaction, ...current]
-  })
-}
+    setTransactions((current) => {
+      const exists = current.some(
+        (item) => item.id === transaction.id,
+      )
+
+      if (exists) {
+        return current.map((item) =>
+          item.id === transaction.id
+            ? transaction
+            : item,
+        )
+      }
+
+      return [transaction, ...current]
+    })
+  }
 
   const formatAmount = (
     amount: number,
@@ -252,6 +258,19 @@ export function TransactionsPage() {
       },
     ).format(
       new Date(`${date}T00:00:00`),
+    )
+  }
+
+  const formatPaymentMethod = (
+    method: string | null,
+  ) => {
+    if (!method) {
+      return "Other"
+    }
+
+    return (
+      method.charAt(0).toUpperCase() +
+      method.slice(1)
     )
   }
 
@@ -435,11 +454,10 @@ export function TransactionsPage() {
           </div>
         ) : null}
 
-        {/* Transaction list */}
+        {/* Transaction List */}
 
         {!loading &&
-        filteredTransactions.length >
-          0 ? (
+        filteredTransactions.length > 0 ? (
           <div className="space-y-3">
             {filteredTransactions.map(
               (transaction) => {
@@ -448,106 +466,150 @@ export function TransactionsPage() {
                   "income"
 
                 const partyName =
-                  getPartyName(
-                    transaction,
-                  )
+                  getPartyName(transaction)
+
+                const partyLabel =
+                  transaction.party_type ===
+                  "agent"
+                    ? "Agent"
+                    : "Agency"
+
+                const party =
+                  transaction.party_type ===
+                  "agent"
+                    ? agents.find(
+                        (agent) =>
+                          agent.id ===
+                          transaction.agent_id,
+                      )
+                    : agencies.find(
+                        (agency) =>
+                          agency.id ===
+                          transaction.agency_id,
+                      )
+
+                const partyDisplay =
+  party?.name ?? partyName
 
                 return (
-                  <div
+                  <Card
                     key={transaction.id}
-                    className="rounded-xl border bg-card p-4"
+                    className="overflow-hidden transition-shadow hover:shadow-sm"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <div className="mt-0.5 rounded-full border p-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        {/* Type Icon */}
+
+                        <div
+                          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
+                            isIncome
+                              ? "bg-muted"
+                              : "bg-destructive/10"
+                          }`}
+                        >
                           {isIncome ? (
-                            <ArrowUpRight className="size-4" />
+                            <ArrowDownLeft className="size-5" />
                           ) : (
-                            <ArrowDownRight className="size-4" />
+                            <ArrowUpRight className="size-5 text-destructive" />
                           )}
                         </div>
 
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">
-                            {transaction.description ||
-                              "Transaction"}
-                          </p>
+                        {/* Main Content */}
 
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {partyName}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          {/* Description + Amount */}
 
-                          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                            <span className="capitalize">
-                              {transaction.payment_method}
-                            </span>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold">
+                                {transaction.description ||
+                                  (isIncome
+                                    ? "Income"
+                                    : "Expense")}
+                              </p>
 
-                            <span>•</span>
+                              <p className="mt-1 truncate text-xs text-muted-foreground">
+                                {partyLabel}
 
-                            <span>
-                              {formatDate(
-                                transaction.transaction_date,
+                                {partyDisplay
+                                  ? ` • ${partyDisplay}`
+                                  : ""}
+                              </p>
+                            </div>
+
+                            {/* Amount */}
+
+                            <p
+                              className={`shrink-0 text-base font-bold tracking-tight ${
+                                isIncome
+                                  ? "text-foreground"
+                                  : "text-destructive"
+                              }`}
+                            >
+                              {isIncome
+                                ? "+"
+                                : "−"}
+                              ৳
+                              {Number(
+                                transaction.amount,
+                              ).toLocaleString(
+                                "en-BD",
+                                {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                },
                               )}
-                            </span>
+                            </p>
+                          </div>
 
-                            {transaction.reference_no ? (
-                              <>
-                                <span>
-                                  •
-                                </span>
+                          {/* Payment + Date + Edit */}
 
-                                <span>
-                                  Ref:{" "}
-                                  {
-                                    transaction.reference_no
-                                  }
-                                </span>
-                              </>
-                            ) : null}
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                              <span className="shrink-0">
+                                {formatPaymentMethod(
+                                  transaction.payment_method,
+                                )}
+                              </span>
+
+                              <span>
+                                •
+                              </span>
+
+                              <span className="shrink-0">
+                                {formatDate(
+                                  transaction.transaction_date,
+                                )}
+                              </span>
+                            </div>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
+                              onClick={() =>
+                                handleEdit(
+                                  transaction,
+                                )
+                              }
+                            >
+                              <Pencil className="size-3.5" />
+                              Edit
+                            </Button>
                           </div>
                         </div>
                       </div>
-
-                      <div className="shrink-0 text-right">
-                        <p className="font-semibold">
-                          {isIncome
-                            ? "+"
-                            : "-"}{" "}
-                          ৳{" "}
-                          {formatAmount(
-                            Number(
-                              transaction.amount,
-                            ),
-                          )}
-                        </p>
-
-                        <p className="mt-1 text-xs uppercase text-muted-foreground">
-                          {transaction.type}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex justify-end border-t pt-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleEdit(
-                            transaction,
-                          )
-                        }
-                      >
-                        <Pencil />
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )
               },
             )}
           </div>
         ) : null}
       </div>
+
+      {/* Transaction Sheet */}
 
       <TransactionSheet
         open={sheetOpen}
