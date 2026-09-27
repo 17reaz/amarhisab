@@ -103,18 +103,22 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
           fixed
           left-0
           top-0
+          flex
           h-[100dvh]
           w-full
           max-w-none
           translate-x-0
           translate-y-0
+          flex-col
           gap-0
+          overflow-hidden
           rounded-none
           border-0
           p-0
           sm:left-1/2
           sm:top-[10%]
           sm:h-auto
+          sm:max-h-[80dvh]
           sm:w-[calc(100%-2rem)]
           sm:max-w-lg
           sm:translate-x-[-50%]
@@ -123,7 +127,16 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
           sm:border
         "
       >
-        <DialogHeader className="border-b px-4 pb-3 pt-4">
+        <DialogHeader
+          className="
+            shrink-0
+            border-b
+            px-4
+            pb-3
+            pt-[calc(env(safe-area-inset-top,0px)+1rem)]
+            sm:pt-4
+          "
+        >
           <DialogTitle className="sr-only">
             Global search
           </DialogTitle>
@@ -149,7 +162,16 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-2 sm:max-h-80">
+        <div
+          className="
+            flex-1
+            overflow-y-auto
+            p-2
+            pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]
+            sm:max-h-80
+            sm:flex-none
+          "
+        >
           {results.length > 0 ? (
             results.map((item) => (
               <button
