@@ -13,12 +13,12 @@ function App() {
       <AppRouter />
 
       <Toaster
-  position="bottom-right"
+  position="bottom-center"
   richColors
   closeButton
   duration={3000}
   toastOptions={{
-    className: "mb-2 mr-2",
+    className: "mb-2",
   }}
 />
     </>
