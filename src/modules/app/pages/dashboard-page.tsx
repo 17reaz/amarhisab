@@ -195,7 +195,6 @@ export function DashboardPage() {
           <CardContent className="grid grid-cols-2 gap-3 pt-4">
             <button
               type="button"
-              onClick={() => openQuickTransaction("income")}
               className="rounded-xl bg-primary-foreground/10 p-3 text-left transition-colors hover:bg-primary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
             >
               <div className="flex items-center gap-2 text-xs text-primary-foreground/70">
@@ -222,7 +221,6 @@ export function DashboardPage() {
 
             <button
               type="button"
-              onClick={() => openQuickTransaction("expense")}
               className="rounded-xl bg-primary-foreground/10 p-3 text-left transition-colors hover:bg-primary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
             >
               <div className="flex items-center gap-2 text-xs text-primary-foreground/70">
