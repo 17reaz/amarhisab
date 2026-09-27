@@ -1,23 +1,25 @@
 import { Check, Monitor, Moon, Sun } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "@/components/theme-provider"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const themes = [
   {
     value: "light" as const,
     label: "Light",
+    description: "Always use light mode",
     icon: Sun,
   },
   {
     value: "dark" as const,
     label: "Dark",
+    description: "Always use dark mode",
     icon: Moon,
   },
   {
     value: "system" as const,
     label: "System",
+    description: "Follow your device preference",
     icon: Monitor,
   },
 ]
@@ -31,32 +33,38 @@ export function AppearanceSection() {
         <CardTitle className="text-base">Appearance</CardTitle>
       </CardHeader>
 
-      <CardContent className="border-t p-4">
-        <p className="mb-3 text-xs text-muted-foreground">
-          Choose how AmarHisab looks on this device.
-        </p>
+      <CardContent className="space-y-2">
+        {themes.map((item) => {
+          const Icon = item.icon
+          const selected = theme === item.value
 
-        <div className="grid grid-cols-3 gap-2">
-          {themes.map((item) => {
-            const Icon = item.icon
-            const active = theme === item.value
-
-            return (
-              <Button
-                key={item.value}
-                type="button"
-                variant={active ? "default" : "outline"}
-                className="h-12 flex-col gap-1"
-                onClick={() => setTheme(item.value)}
-              >
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setTheme(item.value)}
+              className="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-muted/50"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
                 <Icon className="size-4" />
-                <span className="text-xs">{item.label}</span>
+              </div>
 
-                {active && <Check className="sr-only" />}
-              </Button>
-            )
-          })}
-        </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {item.label}
+                </p>
+
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+
+              {selected ? (
+                <Check className="size-4 text-primary" />
+              ) : null}
+            </button>
+          )
+        })}
       </CardContent>
     </Card>
   )

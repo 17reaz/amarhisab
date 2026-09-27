@@ -1,108 +1,258 @@
-import { useEffect, useState } from "react"
-import { LogOut, Monitor } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import type { Session } from "@supabase/supabase-js"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Clock3, Monitor, Smartphone } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+  getCurrentClientSessionId,
+  getSessionHistory,
+  type SessionHistory,
+} from "../services/settings-service"
 
-import { signOut } from "@/modules/auth/services/auth-service"
-import { getCurrentSession } from "../services/settings-service"
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-BD", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+function formatDuration(
+  loginAt: string,
+  logoutAt: string | null,
+  lastSeenAt: string,
+) {
+  const start = new Date(loginAt).getTime()
+
+  const end = logoutAt
+    ? new Date(logoutAt).getTime()
+    : new Date(lastSeenAt).getTime()
+
+  const milliseconds = Math.max(0, end - start)
+  const totalMinutes = Math.floor(milliseconds / 60000)
+
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
+  const minutes = totalMinutes % 60
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+
+  return `${minutes}m`
+}
+
+function getDeviceIcon(userAgent: string | null) {
+  if (!userAgent) {
+    return Monitor
+  }
+
+  const mobile =
+    /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+
+  return mobile ? Smartphone : Monitor
+}
+
+function getDeviceName(userAgent: string | null) {
+  if (!userAgent) {
+    return "Unknown device"
+  }
+
+  if (/iPhone/i.test(userAgent)) {
+    return "iPhone"
+  }
+
+  if (/iPad/i.test(userAgent)) {
+    return "iPad"
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return "Android device"
+  }
+
+  if (/Edg/i.test(userAgent)) {
+    return "Microsoft Edge"
+  }
+
+  if (/Chrome/i.test(userAgent)) {
+    return "Google Chrome"
+  }
+
+  if (/Firefox/i.test(userAgent)) {
+    return "Firefox"
+  }
+
+  if (/Safari/i.test(userAgent)) {
+    return "Safari"
+  }
+
+  return "Web browser"
+}
 
 export function SessionSection() {
-  const navigate = useNavigate()
-
-  const [session, setSession] = useState<Session | null>(null)
+  const [sessions, setSessions] = useState<SessionHistory[]>([])
   const [loading, setLoading] = useState(true)
-  const [signingOut, setSigningOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let mounted = true
+  const currentSessionId = useMemo(
+    () => getCurrentClientSessionId(),
+    [],
+  )
 
-    async function loadSession() {
-      try {
-        const currentSession = await getCurrentSession()
+  const loadSessions = useCallback(async () => {
+    try {
+      setError(null)
 
-        if (mounted) {
-          setSession(currentSession)
-        }
-      } catch (error) {
-        console.error("Failed to load session:", error)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadSession()
-
-    return () => {
-      mounted = false
+      const data = await getSessionHistory()
+      setSessions(data)
+    } catch (err) {
+      console.error("Failed to load session history:", err)
+      setError("Could not load session history.")
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  async function handleSignOut() {
-    setSigningOut(true)
+  useEffect(() => {
+    loadSessions()
+  }, [loadSessions])
 
-    try {
-      const { error } = await signOut()
-
-      if (error) {
-        console.error("Sign out failed:", error)
-        return
-      }
-
-      navigate("/login", { replace: true })
-    } finally {
-      setSigningOut(false)
-    }
-  }
-
-  const email = session?.user.email ?? "Unknown account"
+  const currentSession = sessions.find(
+    (session) => session.session_id === currentSessionId,
+  )
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Session</CardTitle>
+        <CardTitle className="text-base">
+          Sessions
+        </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4 border-t p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <Monitor className="size-4" />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Current session</p>
-
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {loading ? "Checking session..." : email}
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Loading sessions...
             </p>
           </div>
+        ) : error ? (
+          <div className="p-4">
+            <p className="text-sm text-destructive">
+              {error}
+            </p>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              No session history yet.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {currentSession ? (
+              <div className="border-t bg-muted/30 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Clock3 className="size-4 text-primary" />
+                  </div>
 
-          {!loading && session && (
-            <span className="text-xs font-medium text-green-600">
-              Active
-            </span>
-          )}
-        </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">
+                        Current session
+                      </p>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={loading || signingOut || !session}
-          onClick={handleSignOut}
-        >
-          <LogOut className="mr-2 size-4" />
-          {signingOut ? "Signing out..." : "Sign out"}
-        </Button>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        Active
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Started {formatDate(currentSession.login_at)}
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Duration{" "}
+                      {formatDuration(
+                        currentSession.login_at,
+                        null,
+                        new Date().toISOString(),
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="divide-y">
+              {sessions.map((session) => {
+                const DeviceIcon = getDeviceIcon(
+                  session.user_agent,
+                )
+
+                const isCurrent =
+                  session.session_id === currentSessionId
+
+                return (
+                  <div
+                    key={session.id}
+                    className="flex items-start gap-3 p-4"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <DeviceIcon className="size-4" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium">
+                          {getDeviceName(session.user_agent)}
+                        </p>
+
+                        {isCurrent ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            Current
+                          </span>
+                        ) : session.is_active ? (
+                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                            Active
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Login: {formatDate(session.login_at)}
+                      </p>
+
+                      {session.logout_at ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Logout: {formatDate(session.logout_at)}
+                        </p>
+                      ) : !isCurrent ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Last active:{" "}
+                          {formatDate(session.last_seen_at)}
+                        </p>
+                      ) : null}
+
+                      <p className="mt-1 text-xs font-medium text-foreground/80">
+                        Duration:{" "}
+                        {formatDuration(
+                          session.login_at,
+                          session.logout_at,
+                          session.last_seen_at,
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

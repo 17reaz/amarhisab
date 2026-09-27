@@ -1,5 +1,7 @@
-import { supabase } from "@/lib/supabase"
 import { db } from "@/lib/db"
+import { supabase } from "@/lib/supabase"
+import { clearCurrentClientSessionId, endCurrentSession } from "@/modules/app/services/settings-service"
+
 export async function signIn(
   email: string,
   password: string,
@@ -10,14 +12,16 @@ export async function signIn(
   })
 }
 
-// export async function signOut() {
-//   return supabase.auth.signOut({
-//     scope: "local",
-//   })
-// }
-
 export async function signOut() {
-  const result = await supabase.auth.signOut({ scope: "local" })
+  try {
+    await endCurrentSession()
+  } catch (error) {
+    console.error("Failed to record session logout:", error)
+  }
+
+  const result = await supabase.auth.signOut({
+    scope: "local",
+  })
 
   await Promise.all([
     db.agents.clear(),
@@ -25,8 +29,11 @@ export async function signOut() {
     db.transactions.clear(),
   ])
 
+  clearCurrentClientSessionId()
+
   return result
 }
+
 export async function getSession() {
   return supabase.auth.getSession()
 }
