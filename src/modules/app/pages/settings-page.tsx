@@ -152,15 +152,6 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => navigate("/app/profile")}
-      >
-        Manage Profile
-      </Button>
     </div>
   )
 }
