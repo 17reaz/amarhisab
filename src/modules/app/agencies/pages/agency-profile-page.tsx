@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { AppShell } from "../../components/app-shell"
 import { getAgencies } from "../services/agency-service"
 import { getAgencyStatement } from "../services/agency-statement-service"
 
@@ -190,7 +189,7 @@ const [transactionOpen, setTransactionOpen] =
   }, [filteredTransactions])
 
   return (
-    <AppShell title="Agency Statement">
+    <>
       <div className="space-y-5">
 
         {/* Header */}
@@ -691,6 +690,6 @@ const [transactionOpen, setTransactionOpen] =
     void load()
   }}
 />
-    </AppShell>
+    </>
   )
 }
