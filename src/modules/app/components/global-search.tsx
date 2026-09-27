@@ -98,41 +98,86 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
         {trigger}
       </DialogTrigger>
 
-      <DialogContent className="top-[18%] max-w-lg translate-y-0 gap-0 p-0">
-        <DialogHeader className="border-b px-4 py-3">
+      <DialogContent
+        className="
+          fixed
+          left-0
+          top-0
+          h-[100dvh]
+          w-full
+          max-w-none
+          translate-x-0
+          translate-y-0
+          gap-0
+          rounded-none
+          border-0
+          p-0
+          sm:left-1/2
+          sm:top-[10%]
+          sm:h-auto
+          sm:w-[calc(100%-2rem)]
+          sm:max-w-lg
+          sm:translate-x-[-50%]
+          sm:translate-y-0
+          sm:rounded-xl
+          sm:border
+        "
+      >
+        <DialogHeader className="border-b px-4 pb-3 pt-4">
           <DialogTitle className="sr-only">
             Global search
           </DialogTitle>
 
-          <div className="flex items-center gap-2">
-            <Search className="size-4 shrink-0 text-muted-foreground" />
+          <div className="flex h-11 items-center gap-3 rounded-lg bg-muted/60 px-3">
+            <Search className="size-5 shrink-0 text-muted-foreground" />
 
             <Input
               autoFocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search AmarHisab..."
-              className="border-0 px-0 shadow-none focus-visible:ring-0"
+              className="
+                h-full
+                border-0
+                bg-transparent
+                px-0
+                text-base
+                shadow-none
+                focus-visible:ring-0
+              "
             />
           </div>
         </DialogHeader>
 
-        <div className="max-h-80 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 sm:max-h-80">
           {results.length > 0 ? (
             results.map((item) => (
               <button
                 key={item.path}
                 type="button"
-                className="flex w-full items-center rounded-md px-3 py-2.5 text-left text-sm hover:bg-muted"
+                className="
+                  flex
+                  min-h-12
+                  w-full
+                  items-center
+                  rounded-lg
+                  px-3
+                  text-left
+                  text-[15px]
+                  active:bg-muted
+                  hover:bg-muted
+                "
                 onClick={() => handleSelect(item.path)}
               >
                 {item.label}
               </button>
             ))
           ) : (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              No results found.
-            </p>
+            <div className="flex min-h-40 items-center justify-center px-4">
+              <p className="text-sm text-muted-foreground">
+                No results found.
+              </p>
+            </div>
           )}
         </div>
       </DialogContent>
