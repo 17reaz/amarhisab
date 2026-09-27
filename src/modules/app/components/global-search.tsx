@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { Search } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
@@ -58,11 +58,28 @@ const items = [
   },
 ]
 
+const LAST_SEARCH_KEY = "global-search:last-query"
+
 export function GlobalSearch({ trigger }: GlobalSearchProps) {
   const navigate = useNavigate()
 
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState(() => {
+    if (typeof window === "undefined") return ""
+    return window.localStorage.getItem(LAST_SEARCH_KEY) ?? ""
+  })
+
+  useEffect(() => {
+    try {
+      if (query) {
+        window.localStorage.setItem(LAST_SEARCH_KEY, query)
+      } else {
+        window.localStorage.removeItem(LAST_SEARCH_KEY)
+      }
+    } catch {
+      // ignore storage errors (private mode, quota, etc.)
+    }
+  }, [query])
 
   const results = useMemo(() => {
     const value = query.trim().toLowerCase()
@@ -80,15 +97,11 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
 
   function handleOpenChange(value: boolean) {
     setOpen(value)
-
-    if (!value) {
-      setQuery("")
-    }
+    // query intentionally NOT cleared here, so last search persists
   }
 
   function handleSelect(path: string) {
     setOpen(false)
-    setQuery("")
     navigate(path)
   }
 
