@@ -1,7 +1,28 @@
+import { useEffect } from "react"
+import { Toaster, toast } from "sonner"
+
 import { AppRouter } from "./router/index"
 
 function App() {
-  return <AppRouter />
+  useEffect(() => {
+    toast.success("AmarHisab is ready")
+  }, [])
+
+  return (
+    <>
+      <AppRouter />
+
+      <Toaster
+  position="bottom-right"
+  richColors
+  closeButton
+  duration={3000}
+  toastOptions={{
+    className: "mb-2 mr-2",
+  }}
+/>
+    </>
+  )
 }
 
 export default App
