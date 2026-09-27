@@ -1,8 +1,6 @@
 import {
-  Bell,
   ChevronRight,
   Info,
-  Moon,
   Shield,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
@@ -15,144 +13,80 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import { AppearanceSection } from "./appearance-section"
+import { SessionSection } from "./session-section"
 
 export function SettingsPage() {
   const navigate = useNavigate()
 
   return (
-    <>
-      <div className="space-y-5">
-        {/* Account */}
+    <div className="space-y-5">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Account</CardTitle>
+        </CardHeader>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Account
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/app/profile")
-              }
-              className="flex w-full items-center gap-3 border-t p-4 text-left transition-colors hover:bg-muted/50"
-            >
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Shield className="size-4" />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">
-                  Profile
-                </p>
-
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Manage your account information
-                </p>
-              </div>
-
-              <ChevronRight className="size-4 text-muted-foreground" />
-            </button>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Preferences
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <div className="flex items-center gap-3 border-t p-4">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Moon className="size-4" />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">
-                  Appearance
-                </p>
-
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Theme preferences
-                </p>
-              </div>
-
-              <span className="text-xs text-muted-foreground">
-                System
-              </span>
+        <CardContent className="p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/app/profile")}
+            className="flex w-full items-center gap-3 border-t p-4 text-left transition-colors hover:bg-muted/50"
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <Shield className="size-4" />
             </div>
 
-            <div className="flex items-center gap-3 border-t p-4">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Bell className="size-4" />
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Profile</p>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">
-                  Notifications
-                </p>
-
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Notification preferences
-                </p>
-              </div>
-
-              <span className="text-xs text-muted-foreground">
-                Default
-              </span>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Manage your account information
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* About */}
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              About
-            </CardTitle>
-          </CardHeader>
+      <AppearanceSection />
 
-          <CardContent className="p-0">
-            <div className="flex items-center gap-3 border-t p-4">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Info className="size-4" />
-              </div>
+      <SessionSection />
 
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">
-                  AmarHisab
-                </p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">About</CardTitle>
+        </CardHeader>
 
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Travel agency finance
-                </p>
-              </div>
-
-              <span className="text-xs text-muted-foreground">
-                v1.0
-              </span>
+        <CardContent className="border-t p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <Info className="size-4" />
             </div>
-          </CardContent>
-        </Card>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={() =>
-            navigate("/app/profile")
-          }
-        >
-          Manage Profile
-        </Button>
-      </div>
-    </>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">AmarHisab</p>
+
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Travel agency finance
+              </p>
+            </div>
+
+            <span className="text-xs text-muted-foreground">
+              v1.0
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => navigate("/app/profile")}
+      >
+        Manage Profile
+      </Button>
+    </div>
   )
 }
