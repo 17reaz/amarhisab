@@ -15,13 +15,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { AppShell } from "../components/app-shell"
 
 export function SettingsPage() {
   const navigate = useNavigate()
 
   return (
-    <AppShell title="Settings">
+    <>
       <div className="space-y-5">
         {/* Account */}
 
@@ -154,6 +153,6 @@ export function SettingsPage() {
           Manage Profile
         </Button>
       </div>
-    </AppShell>
+    </>
   )
 }

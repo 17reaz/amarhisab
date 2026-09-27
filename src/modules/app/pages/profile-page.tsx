@@ -17,7 +17,6 @@ import {
 import { useAuth } from "@/modules/auth/hooks/use-auth"
 import { signOut } from "@/modules/auth/services/auth-service"
 
-import { AppShell } from "../components/app-shell"
 
 export function ProfilePage() {
   const navigate = useNavigate()
@@ -77,7 +76,7 @@ export function ProfilePage() {
   }
 
   return (
-    <AppShell title="Profile">
+    <>
       <div className="space-y-5">
         <section className="text-center">
           <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
@@ -177,6 +176,6 @@ export function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </AppShell>
+    </>
   )
 }
