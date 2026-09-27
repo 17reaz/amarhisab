@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ChevronUp,
   FileText,
-  Phone,
   Plus,
   RefreshCw,
 } from "lucide-react"
@@ -484,54 +483,8 @@ const [transactionOpen, setTransactionOpen] =
           <>
             {/* Agency Info */}
 
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <div className="flex items-start gap-3">
+            
 
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
-                  {String(agency.sl).padStart(
-                    3,
-                    "0",
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-
-                  <div className="flex items-start justify-between gap-3">
-
-                    <div>
-                      <h3 className="font-semibold">
-                        {agency.name}
-                      </h3>
-
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        SL #{agency.sl}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        agency.is_active
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {agency.is_active
-                        ? "Active"
-                        : "Inactive"}
-                    </span>
-
-                  </div>
-
-                  {agency.phone ? (
-                    <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="size-4" />
-                      {agency.phone}
-                    </p>
-                  ) : null}
-
-                </div>
-              </div>
-            </div>
 
             {/* Summary */}
 
