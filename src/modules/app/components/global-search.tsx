@@ -94,7 +94,7 @@ export function GlobalSearch({ trigger }: GlobalSearchProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         {trigger}
       </DialogTrigger>
 
