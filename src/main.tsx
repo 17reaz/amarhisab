@@ -8,18 +8,6 @@ import App from "./app/App"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
 
 const updateSW = registerSW({
-  onRegisteredSW(_swUrl, registration) {
-    if (!registration) return
-
-    setInterval(() => {
-      registration.update()
-    }, 60 * 60 * 1000)
-  },
-
-  onOfflineReady() {
-    console.log("AmarHisab is ready to work offline")
-  },
-
   onNeedRefresh() {
     toast("A new version of AmarHisab is available", {
       duration: Infinity,
@@ -31,6 +19,10 @@ const updateSW = registerSW({
         },
       },
     })
+  },
+
+  onOfflineReady() {
+    console.log("AmarHisab is ready to work offline")
   },
 })
 
