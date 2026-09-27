@@ -13,7 +13,7 @@ function App() {
       <AppRouter />
 
       <Toaster
-  position="bottom-center"
+  position="top-right"
   richColors
   closeButton
   duration={3000}
